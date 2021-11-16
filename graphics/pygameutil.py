@@ -311,9 +311,11 @@ class DraggableRect:
         if event.type == pg.MOUSEMOTION:
             x, y = pg.mouse.get_pos()
             if self.active:
-                self.x += event.rel[0]
-                self.y += event.rel[1]
-
+                self.x = x - self.dim[0]/2
+                self.y = y - self.dim[1]/2
+            if self.onDrag != None:
+                self.onDrag()
+            
         self.show()
 
 
@@ -342,10 +344,10 @@ class Screen(pg.Surface):
         self.widgets.clear()
 
     def event_update(self, event):
+        rets = []
         for widget in self.widgets:
             if isinstance(widget, (Input, Button, DraggablePoint, DraggableRect)):
                 widget.update(event)
-
         if event.type == pg.KEYDOWN:
             if event.key == pg.K_SPACE:
                 if self.actionButton != None:

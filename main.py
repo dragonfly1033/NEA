@@ -1,11 +1,11 @@
 import colorsys
 import pygame as pg
 from math import sqrt, sin, cos, radians, degrees, pi
-import pygameutil as pgu
+from graphics import pygameutil as pgu
 from random import randint as rand
 
 
-def test(display, p1, p2, p1d, p2d, res):
+def drawBezier(display, p1, p2, p1d, p2d, res):
     p1 = (p1.x, p1.y)
     p2 = (p2.x, p2.y)
     l = bezier(p1 ,p2, p1d, p2d, res)
@@ -33,17 +33,17 @@ def bezier(p0, p3, p0dir, p3dir, res):
     return ps
 
 def mainScreenSetup():
-    global alpha1, dp1, dp3, dp2, dp4
     mainScreen.fill((0, 0, 0))
-    alpha1 = pgu.LayeredSurface(mainScreen, DIM, zlayer=6, flags=pg.SRCALPHA)
+    draggableAlphaLayer = pgu.LayeredSurface(mainScreen, DIM, zlayer=6, flags=pg.SRCALPHA)
+    bezierAlphaLayer = pgu.LayeredSurface(mainScreen, DIM, zlayer=5, flags=pg.SRCALPHA)
     e1 = pgu.Input(mainScreen, (100, 100, 300, 100), medFont, [DARKGREY, LIGHTGREY], VDARKGREY, RED, zlayer=0)
-    l1 = pgu.Label(mainScreen, 'More poop', (100, 400, 300, 100), medFont, LIGHTGREY, VDARKGREY, align='center', justify='centre', zlayer=0)
-    dp1 = pgu.DraggablePoint(alpha1, 500, 400, 10, RED, VDARKGREY)
-    dp2 = pgu.DraggablePoint(alpha1, 600, 400, 10, RED, VDARKGREY)
-    dp3 = pgu.DraggablePoint(alpha1, 700, 400, 10, RED, VDARKGREY)
-    dp4 = pgu.DraggablePoint(alpha1, 800, 400, 10, RED, VDARKGREY)
-    dr1 = pgu.DraggableRect(alpha1, 900, 400, 200, 100, RED, VDARKGREY)
-    b1 = pgu.Button(mainScreen, 'poop pee', (100, 300, 300, 100), medFont, DARKGREY, LIGHTGREY, VDARKGREY, RED, lambda: test(alpha1, dp1, dp3, (0, 1), (0, -1), 15), zlayer=0)
+    l1 = pgu.Label(mainScreen, 'More poop', (100, 500, 300, 100), medFont, LIGHTGREY, VDARKGREY, align='center', justify='centre', zlayer=0)
+    dp1 = pgu.DraggablePoint(draggableAlphaLayer, 500, 400, 10, RED, VDARKGREY)
+    dp2 = pgu.DraggablePoint(draggableAlphaLayer, 600, 400, 10, RED, VDARKGREY)
+    dp3 = pgu.DraggablePoint(draggableAlphaLayer, 700, 400, 10, RED, VDARKGREY)
+    dp4 = pgu.DraggablePoint(draggableAlphaLayer, 800, 400, 10, RED, VDARKGREY)
+    dr1 = pgu.DraggableRect(draggableAlphaLayer, 900, 400, 200, 100, RED, VDARKGREY)
+    b1 = pgu.Button(mainScreen, 'poop pee', (100, 300, 300, 100), medFont, DARKGREY, LIGHTGREY, VDARKGREY, RED, lambda: print('hey'), zlayer=0)
 
 
 pg.init()
