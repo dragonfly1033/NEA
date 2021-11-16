@@ -23,3 +23,7 @@ Absorption 4: ([A-Z])\+\(?[A-Z]\*\1\)?  ;  \1
 
 De Morgans 1: \¬\(([A-Z])\*([A-Z])\)  ;  \¬\1\+\¬\2
 De Morgans 2: \¬\(([A-Z])\+([A-Z])\)  ;  \¬\1\*\¬\2
+
+
+
+VERAION 1
