@@ -91,16 +91,24 @@ def parse(s):
 
     postfix = ast.traverse(order='pre')
     units = tokenize(postfix)
+
     for i in units:
-        op, v1, v2 = unitize(units[i]).split(',')
+        try:
+            op, v1, v2 = unitize(units[i]).split(',')
+        except ValueError:
+            units[i] = units[units[i]]
+            continue
+
         if v1 in units:
             v1 = units[v1]
         else:
             v1 = tk.Var(v1)
+
         if v2 in units:
             v2 = units[v2]
         else:
             v2 = tk.Var(v2)
+
         if op == '*':
             units[i] = tk.Product(v1, v2)
         elif op == '+':
@@ -112,9 +120,6 @@ def parse(s):
 
     return final
 
-objectified = parse('((A+B)+C)+D')
-objectified.cluster()
-print(objectified.show())
 
 # 1. De Morgans
 # 2. Identity, idempotent, union, intersection, double negation

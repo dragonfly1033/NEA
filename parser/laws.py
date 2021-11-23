@@ -106,3 +106,24 @@ def applyLaws(s):
 # Product(Sum,...) => Sum(Product,...)
 
 
+
+# 
+# for each term in terms:
+#   for subterm in term:
+#       if term type == subterm type: 
+#           remove subterm from term
+#           append subterm terms into term
+#       
+#
+#   if term is product:
+#       if terms has 0:
+#           replace term with 0
+#       if term has 1:
+#           remove 1    
+#   if terms is sum:
+#       if term has 1:
+#           replace term with 1
+#       if term has 0:
+#           remove 0
+#   unless term is Var: redo these steps for term
+# 
