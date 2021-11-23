@@ -34,106 +34,32 @@ class Expression:
             if isinstance(i, Product):
                 if VAR0 in i.terms:
                     self.terms.remove(i)
-                    self.terms += [VAR0]
+                    self.terms.append(VAR0)
                 if VAR1 in i.terms:
                     i.terms.remove(VAR1)
             elif isinstance(i, Sum):
                 if VAR1 in i.terms:
                     self.terms.remove(i)
-                    self.terms += [VAR1]
+                    self.terms.append(VAR1)
                 if VAR0 in i.terms:
                     i.terms.remove(VAR0)
             if not isinstance(i, Var): i.identities()
 
-class Product:
+class Product(Expression):
     def __init__(self, *args):
-        self.terms = list(args)
+        super().__init__(*args)
 
     @property
     def rep(self):
         return '*'.join([i.rep for i in self.terms])
 
-    def cluster(self):
-        for term in self.terms:
-            if not isinstance(term, (Not, Var)):
-                if len(term.terms) == 1:
-                    self.terms.remove(term)
-                    self.terms += term.terms
-                    break
-
-                for subterm in term.terms:
-                    if type(subterm) == type(term):
-                        term.terms.remove(subterm)
-                        term.terms += subterm.terms
-                term.cluster()
-
-    def unique(self):
-        tmp = []
-        for i in self.terms:
-            if i not in tmp: tmp.append(i)
-            i.unique()
-        self.terms = tmp
-
-    def identities(self):
-        for i in self.terms:
-            if isinstance(i, Product):
-                if VAR0 in i.terms:
-                    self.terms.remove(i)
-                    self.terms += [VAR0]
-                if VAR1 in i.terms:
-                    i.terms.remove(VAR1)
-            elif isinstance(i, Sum):
-                if VAR1 in i.terms:
-                    self.terms.remove(i)
-                    self.terms += [VAR1]
-                if VAR0 in i.terms:
-                    i.terms.remove(VAR0)
-            if not isinstance(i, Var): i.identities()
-
-class Sum:
+class Sum(Expression):
     def __init__(self, *args):
-        self.terms = list(args)
+        super().__init__(*args)
 
     @property
     def rep(self):
         return '(' + '+'.join([i.rep for i in self.terms]) + ')'
-
-    def cluster(self):
-        for term in self.terms:
-            if not isinstance(term, (Not, Var)):
-                if len(term.terms) == 1:
-                    self.terms.remove(term)
-                    self.terms += term.terms
-                    break
-
-                for subterm in term.terms:
-                    if type(subterm) == type(term):
-                        term.terms.remove(subterm)
-                        term.terms += subterm.terms
-                term.cluster()
-
-    def unique(self):
-        tmp = []
-        for i in self.terms:
-            if i not in tmp: tmp.append(i)
-            i.unique()
-        self.terms = tmp
-
-    def identities(self):
-        for i in self.terms:
-            if isinstance(i, Product):
-                if VAR0 in i.terms:
-                    self.terms.remove(i)
-                    self.terms += [VAR0]
-                if VAR1 in i.terms:
-                    i.terms.remove(VAR1)
-            elif isinstance(i, Sum):
-                if VAR1 in i.terms:
-                    self.terms.remove(i)
-                    self.terms += [VAR1]
-                if VAR0 in i.terms:
-                    i.terms.remove(VAR0)
-            if not isinstance(i, Var): i.identities()
 
 class Not:
     def __init__(self, *args):

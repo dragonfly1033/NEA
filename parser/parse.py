@@ -91,14 +91,14 @@ def parse(s):
 
     postfix = ast.traverse(order='pre')
     units = tokenize(postfix)
-
     for i in units:
         try:
             op, v1, v2 = unitize(units[i]).split(',')
         except ValueError:
             units[i] = units[units[i]]
+            #op, v1, v2 = unitize(units[i]).split(',')
             continue
-
+        
         if v1 in units:
             v1 = units[v1]
         else:
@@ -115,7 +115,6 @@ def parse(s):
             units[i] = tk.Sum(v1, v2)
         elif op == '¬':
             units[i] = tk.Not(v2)
-
     final = units.popitem()[1]
 
     return final
