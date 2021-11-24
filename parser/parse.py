@@ -1,5 +1,5 @@
 import binaryTree as bt
-import tokens as tk
+from tokens import *
 import re
 from collections import OrderedDict
 
@@ -102,21 +102,21 @@ def parse(s):
         if v1 in units:
             v1 = units[v1]
         else:
-            v1 = tk.Var(v1)
+            v1 = Var(v1)
 
         if v2 in units:
             v2 = units[v2]
         else:
-            v2 = tk.Var(v2)
+            v2 = Var(v2)
 
         if op == '*':
-            units[i] = tk.Product(v1, v2)
+            units[i] = Product(v1, v2)
         elif op == '+':
-            units[i] = tk.Sum(v1, v2)
+            units[i] = Sum(v1, v2)
         elif op == '¬':
-            units[i] = tk.Not(v2)
+            units[i] = Not(v2)
     final = units.popitem()[1]
-
+    final = Expression(final)
     return final
 
 

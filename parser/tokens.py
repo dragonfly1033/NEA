@@ -6,7 +6,31 @@ class Expression:
 
     @property
     def rep(self):
-        return ''.join([i.rep for i in self.terms])[1:-1]
+        return ''.join([i.rep for i in self.terms])
+
+    def simplify(self):
+        print(f'Original: {self.rep}')
+
+        last = self.rep
+        printed = True
+        while printed:
+            printed=False
+            self.cluster()
+            if last != self.rep:
+                print(f'Associative: {self.rep}')
+                last = self.rep
+                printed = True
+            self.unique()
+            if last != self.rep:
+                print(f'Idempotent: {self.rep}')   
+                last = self.rep
+                printed = True
+            self.identities()
+            if last != self.rep:
+                print(f'Identity/Null: {self.rep}')   
+                last = self.rep
+                printed = True
+
 
     def cluster(self):
         for term in self.terms:
@@ -61,9 +85,9 @@ class Sum(Expression):
     def rep(self):
         return '(' + '+'.join([i.rep for i in self.terms]) + ')'
 
-class Not:
+class Not(Expression):
     def __init__(self, *args):
-        self.terms = list(args)
+        super().__init__(*args)
 
     @property
     def rep(self):
