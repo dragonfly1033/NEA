@@ -96,7 +96,6 @@ def parse(s):
             op, v1, v2 = unitize(units[i]).split(',')
         except ValueError:
             units[i] = units[units[i]]
-            #op, v1, v2 = unitize(units[i]).split(',')
             continue
         
         if v1 in units:
