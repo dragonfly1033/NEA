@@ -8,6 +8,14 @@ class Expression:
     def rep(self):
         return ''.join([i.rep for i in self.terms])
 
+    def testLaw(self, name, law, printed, last):
+        law()
+        if last != self.rep:
+            print(f'{name}: {self.rep}')
+            last = self.rep
+            return True, last
+        return printed, last
+
     def simplify(self):
         print(f'Original: {self.rep}')
 
@@ -15,22 +23,10 @@ class Expression:
         printed = True
         while printed:
             printed=False
-            self.cluster()
-            if last != self.rep:
-                print(f'Associative: {self.rep}')
-                last = self.rep
-                printed = True
-            self.unique()
-            if last != self.rep:
-                print(f'Idempotent: {self.rep}')   
-                last = self.rep
-                printed = True
-            self.identities()
-            if last != self.rep:
-                print(f'Identity/Null: {self.rep}')   
-                last = self.rep
-                printed = True
-
+            
+            printed, last = self.testLaw('Associative', self.cluster, printed, last)
+            printed, last = self.testLaw('Idempotent', self.unique, printed, last)
+            printed, last = self.testLaw('Identity/Null', self.identities, printed, last)
 
     def cluster(self):
         for term in self.terms:
@@ -50,7 +46,7 @@ class Expression:
         tmp = []
         for i in self.terms:
             if i not in tmp: tmp.append(i)
-            i.unique()
+            if not isinstance(i, Var): i.unique()
         self.terms = tmp
 
     def identities(self):
@@ -88,17 +84,14 @@ class Sum(Expression):
 class Not(Expression):
     def __init__(self, *args):
         super().__init__(*args)
+        if len(self.terms) > 1:
+            raise ValueError(f'Not object has too many terms: {self.terms}')
+        else:
+            self.term = self.terms[0]
 
     @property
     def rep(self):
         return f'¬({"".join([i.rep for i in self.terms])})'
-
-    def unique(self):
-        tmp = []
-        for i in self.terms:
-            if i not in tmp: tmp.append(i)
-            i.unique()
-        self.terms = tmp
 
 class Var:
     def __init__(self, v):
@@ -114,8 +107,6 @@ class Var:
     def rep(self):
         return self.term    
 
-    def unique(self):
-        pass
 
 VAR0 = Var('0')
 VAR1 = Var('1')

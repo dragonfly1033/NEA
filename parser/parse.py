@@ -64,8 +64,13 @@ def addExpr(s, node):
         node.addVal(s[index])
         if s[index] == '¬':
             node.addChild('#')
-            under = re.findall(r'¬([A-Z])', s[index:]) + re.findall(r'¬\(([A-Z*+¬()]+)\)[+*]', s[index:])
-            node.addChild(under[0])
+            under = re.findall(r'¬([A-Z])', s[index:]) + re.findall(r'¬\(([A-Z*+¬()]+)\)[+*]', s[index:]) + re.findall(r'¬\(([A-Z*+¬()]+)\)(?:$)', s[index:])
+            under = under[0]
+            if not isUnit(under):
+                node.addChild(None)
+                under = addExpr(under, node.right)
+            else:
+                node.addChild(under)
         elif s[index] == '*' or s[index] == '+':
             left, right = s[:index], s[index+1:]
             if not isUnit(left):
