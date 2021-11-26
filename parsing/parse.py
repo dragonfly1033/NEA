@@ -1,3 +1,5 @@
+import sys
+sys.path.insert(0, './')
 import binaryTree as bt
 from tokens import *
 import re
@@ -135,10 +137,4 @@ def parse(s):
     final = Expression(final)
     return final
 
-
-# 1. De Morgans
-# 2. Identity, idempotent, union, intersection, double negation
-# 3. associative, commutative
-# 4. apply absorbtion
-# 5. distributive property
 

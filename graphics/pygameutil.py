@@ -159,11 +159,12 @@ class Input:
                         self.homeCursorPos += 1  
                     self.cursorPos += 1
                 else:
-                    self.text = self.text[:self.cursorPos] + event.unicode + self.text[self.cursorPos:]
-                    self.cursorPos += 1
-                    self.endCursorPos += 1
-                    while self.isWider():
-                        self.homeCursorPos += 1
+                    if len(event.unicode) > 0:
+                        self.text = self.text[:self.cursorPos] + event.unicode + self.text[self.cursorPos:]
+                        self.cursorPos += 1
+                        self.endCursorPos += 1
+                        while self.isWider():
+                            self.homeCursorPos += 1
                 
 
                 if self.cursorPos < 0: self.cursorPos = 0
@@ -349,7 +350,7 @@ class Screen(pg.Surface):
             if isinstance(widget, (Input, Button, DraggablePoint, DraggableRect)):
                 widget.update(event)
         if event.type == pg.KEYDOWN:
-            if event.key == pg.K_SPACE:
+            if event.key == pg.K_RETURN:
                 if self.actionButton != None:
                     self.actionButton.func()
     

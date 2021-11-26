@@ -1,75 +1,75 @@
-import colorsys
+import sys
+sys.path.insert(0, './parsing')
 import pygame as pg
 from math import sqrt, sin, cos, radians, degrees, pi
 from graphics import pygameutil as pgu
-from random import randint as rand
+from parsing import parse
+
+def changeScreen(new):
+    global curScreen
+    if new == 'main':
+        curScreen = mainScreen
+    elif new == 'simplifier':
+        curScreen = simplifierScreen
 
 
-def drawBezier(display, p1, p2, p1d, p2d, res):
-    p1 = (p1.x, p1.y)
-    p2 = (p2.x, p2.y)
-    l = bezier(p1 ,p2, p1d, p2d, res)
-    pg.draw.lines(display, (255, 255, 255), False, l, 1)
+def simplifierScreenSetup():
+    simplifierScreen.fill(BACKGROUNDC)
+    buttonW = 600
+    buttonH = 100
+    gap = 30
+    heading = pgu.Label(simplifierScreen, 'Boolean Simplification', (0, 0, DIM[0], DIM[1]/3), subtitleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
+    homeButton = pgu.Button(simplifierScreen, 'Home', (20, 20, 150, 50), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
+    entry = pgu.Input(simplifierScreen, ((DIM[0]-buttonW)/2, (DIM[1]-buttonH)/2 - 50, buttonW, buttonH), vLargeFont, [BACKGROUNDC, LBLUE], TEXTC, BORDERC, text='Enter Expression')
+    simplifyButton = pgu.Button(simplifierScreen, 'Simplify', ((DIM[0]-buttonW)/2 + buttonW + gap, (DIM[1]-buttonH)/2 - 50, 150, buttonH), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: simplify(entry.text), actionButton=True)
 
-
-def bezier(p0, p3, p0dir, p3dir, res):
-    halfXdiff = 0.5*(p3[0] - p0[0])
-    halfYdiff = 0.5*(p3[1] - p0[1])
-    p1 = (p0[0] + p0dir[0]*halfXdiff, p0[1] + p0dir[1]*halfYdiff)
-    p2 = (p3[0] + p3dir[0]*halfXdiff, p3[1] + p3dir[1]*halfYdiff)
-
-    ps = []
-    t = 0
-    for i in range(res+1):
-        q0 = list(map(lambda x: ((1-t)**3)*x, p0))
-        q1 = list(map(lambda x: ((1-t)**2)*t*3*x, p1))
-        q2 = list(map(lambda x: ((1-t)**1)*t*t*3*x, p2))
-        q3 = list(map(lambda x: t*t*t*x, p3))
-        nx = q0[0] + q1[0] + q2[0] + q3[0]
-        ny = q0[1] + q1[1] + q2[1] + q3[1]
-        ps.append((nx, ny))
-
-        t += 1/res
-    return ps
 
 def mainScreenSetup():
-    mainScreen.fill((0, 0, 0))
-    draggableAlphaLayer = pgu.LayeredSurface(mainScreen, DIM, zlayer=6, flags=pg.SRCALPHA)
-    bezierAlphaLayer = pgu.LayeredSurface(mainScreen, DIM, zlayer=5, flags=pg.SRCALPHA)
-    e1 = pgu.Input(mainScreen, (100, 100, 300, 100), medFont, [DARKGREY, LIGHTGREY], VDARKGREY, RED, zlayer=0)
-    l1 = pgu.Label(mainScreen, 'More poop', (100, 500, 300, 100), medFont, LIGHTGREY, VDARKGREY, align='center', justify='centre', zlayer=0)
-    dp1 = pgu.DraggablePoint(draggableAlphaLayer, 500, 400, 10, RED, VDARKGREY)
-    dp2 = pgu.DraggablePoint(draggableAlphaLayer, 600, 400, 10, RED, VDARKGREY)
-    dp3 = pgu.DraggablePoint(draggableAlphaLayer, 700, 400, 10, RED, VDARKGREY)
-    dp4 = pgu.DraggablePoint(draggableAlphaLayer, 800, 400, 10, RED, VDARKGREY)
-    dr1 = pgu.DraggableRect(draggableAlphaLayer, 900, 400, 200, 100, RED, VDARKGREY)
-    b1 = pgu.Button(mainScreen, 'poop pee', (100, 300, 300, 100), medFont, DARKGREY, LIGHTGREY, VDARKGREY, RED, lambda: print('hey'), zlayer=0)
+    mainScreen.fill(BACKGROUNDC)
+    buttonW = 600
+    buttonH = 100
+    gap = 30
+    heading = pgu.Label(mainScreen, 'b L o g i c.', (0, 0, DIM[0], DIM[1]/3), titleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
+    simplifierButton = pgu.Button(mainScreen, 'Simplifier', ((DIM[0]-buttonW)/2, (DIM[1]-buttonH)/2, buttonW, buttonH), vLargeFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('simplifier'))
+    logicSimButton = pgu.Button(mainScreen, 'Logic Simulator', ((DIM[0]-buttonW)/2, (DIM[1]-buttonH)/2 + (buttonH + gap), buttonW, buttonH), vLargeFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: print())
+    loginButton = pgu.Button(mainScreen, 'Log In', ((DIM[0]-buttonW)/2, (DIM[1]-buttonH)/2 + (buttonH + gap)*2, buttonW, buttonH), vLargeFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: print())
 
+
+def simplify(s):
+    ss = parse.parse(s)
+    ss.simplify()
 
 pg.init()
 pg.font.init()
 
-medFont = pg.font.SysFont('Calibri', 36)
-DIM = (1520, 600)
-LIGHTGREY = (200, 200, 200)
-DARKGREY = (100, 100, 100)
-VDARKGREY = (50, 50, 50)
-RED = (200, 0, 0)
-NORTH = (0, 1)
-SOUTH = (0, -1)
-EAST = (1, 0)
-WEST = (-1, 0)
+smallFont = pg.font.SysFont('Calibri', 16)
+medFont = pg.font.SysFont('Calibri', 24)
+largeFont = pg.font.SysFont('Calibri', 36)
+vLargeFont = pg.font.SysFont('Calibri', 48)
+subtitleFont = pg.font.SysFont('Calibri', 86)
+titleFont = pg.font.SysFont('Calibri', 121)
+
+DIM = (1450, 725)
+
+TEXTC = (73, 88, 103)
+BORDERC = (254, 95, 85)
+BACKGROUNDC = (247, 247, 255)
+DBLUE = (87, 115, 153)
+LBLUE = (189, 213, 234)
 
 display = pg.display.set_mode(DIM)
 clock = pg.time.Clock()
+
 mainScreen = pgu.Screen(DIM)
 mainScreenSetup()
+simplifierScreen = pgu.Screen(DIM)
+simplifierScreenSetup()
 
 
 curScreen = mainScreen
 run = True
 while run:
-    curScreen.fill(0)
+    curScreen.fill(BACKGROUNDC)
     for event in pg.event.get():
         if event.type == pg.QUIT:
             run = False

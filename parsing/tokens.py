@@ -62,37 +62,37 @@ class Expression:
             print(f'{name}: {self.rep}')
             last = deepcopy(self)
             return True, last
-        return printed, last
+        return printed, last    
 
     def simplify(self):
-        self.cluster()
-        print(f'Original: {self.rep}')
+            self.cluster()
+            print(f'Original: {self.rep}')
 
-        last = deepcopy(self)
-        printed = True
-        while printed:
-            printed=False
-            
-            printed, last = self.testLaw('Associative', self.cluster, printed, last)
-            if printed: continue
-            printed, last = self.testLaw('Not', self.flip, printed, last)
-            if printed: continue
-            printed, last = self.testLaw('Null', self.null, printed, last)
-            if printed: continue
-            printed, last = self.testLaw('Identity', self.identity, printed, last)
-            if printed: continue
-            printed, last = self.testLaw('Idempotent', self.unique, printed, last)
-            if printed: continue
-            printed, last = self.testLaw('Involution', self.involution, printed, last)
-            if printed: continue            
-            printed, last = self.testLaw('Inverse', self.inverse, printed, last)
-            if printed: continue
-            printed, last = self.testLaw('De Morgans', self.deMorgans, printed, last)
-            if printed: continue            
-            printed, last = self.testLaw('Absorption', self.absorb, printed, last)
-            if printed: continue 
-            printed, last = self.testLaw('Distributive', self.distribute, printed, last)
-            if printed: continue            
+            last = deepcopy(self)
+            printed = True
+            while printed:
+                printed=False
+                
+                printed, last = self.testLaw('Associative', self.cluster, printed, last)
+                if printed: continue
+                printed, last = self.testLaw('Not', self.flip, printed, last)
+                if printed: continue
+                printed, last = self.testLaw('Null', self.null, printed, last)
+                if printed: continue
+                printed, last = self.testLaw('Identity', self.identity, printed, last)
+                if printed: continue
+                printed, last = self.testLaw('Idempotent', self.unique, printed, last)
+                if printed: continue
+                printed, last = self.testLaw('Involution', self.involution, printed, last)
+                if printed: continue            
+                printed, last = self.testLaw('Inverse', self.inverse, printed, last)
+                if printed: continue
+                printed, last = self.testLaw('De Morgans', self.deMorgans, printed, last)
+                if printed: continue            
+                printed, last = self.testLaw('Absorption', self.absorb, printed, last)
+                if printed: continue 
+                printed, last = self.testLaw('Distributive', self.distribute, printed, last)
+                if printed: continue        
 
     def flip(self):
         for term in self.terms:
@@ -214,12 +214,9 @@ class Expression:
                                 return 
 
                             if notmatch == compareWith:
-                                tmp = Expression(Sum(*match, Product(*diff)))
-                                tmp.cluster()
-                                tmp.unique()
-                                tmp = tmp.terms[0]
                                 self.terms.remove(term)
-                                self.terms.append(tmp)
+                                extra = [i for i in rest if i != every]
+                                self.terms.append(Sum(*notmatch, *diff, *extra))
                                 return
                             
             if not isinstance(term, Var): term.absorb()
@@ -283,7 +280,6 @@ class Var(Expression):
     @property
     def term(self):
         return self.terms[0]   
-
 
 VAR0 = Var('0')
 VAR1 = Var('1')

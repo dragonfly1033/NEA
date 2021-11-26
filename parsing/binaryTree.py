@@ -60,25 +60,3 @@ class Node:
             return f'({left}{this}{right})'
         elif order == 'post':
             return f'({left},{right},{this})'
-
-def fakePopulate():
-
-    T = BinaryTree(1)
-
-    T.root.left = Node(val=2)
-    T.root.left.left = Node(val=4)
-    T.root.left.left.left = Node(val=8)
-    T.root.left.left.right = Node(val=9)
-    T.root.left.right = Node(val=5)
-    T.root.left.right.left = Node(val=10)
-    T.root.left.right.right = Node(val=11)
-
-    T.root.right = Node(val=3)
-    T.root.right.left = Node(val=6)
-    T.root.right.left.left = Node(val=12)
-    T.root.right.left.right = Node(val=13)
-    T.root.right.right = Node(val=7)
-    T.root.right.right.left = Node(val=14)
-    T.root.right.right.right = Node(val=15)
-
-    return T
