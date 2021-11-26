@@ -1,69 +1,244 @@
-
+from functools import reduce
+from copy import deepcopy
+from itertools import product as distributeList
 
 class Expression:
     def __init__(self, *args):
         self.terms = list(args)
+        self.oldRep = ''
+
+    def __eq__(self, other):
+        if isinstance(other, type(self)):
+            return self.terms == other.terms
+        return False
+
+    def __hash__(self):
+        if len(self.terms) > 1:
+            return reduce(lambda i, j: hash(i) ^ hash(j), self.terms)
+        else:
+            return hash(self.term)
 
     @property
     def rep(self):
         return ''.join([i.rep for i in self.terms])
 
+    def typeList(self):
+        print(self.terms)
+        for term in self.terms:
+            if not isinstance(term, Var):
+                try:
+                    term.typeList()
+                except:
+                    print(term)
+
+    def repList(self):
+        print([i.rep for i in self.terms])
+        for term in self.terms:
+            if not isinstance(term, Var):
+                try:
+                    term.typeList()
+                except:
+                    print(term)
+                
+    def getNot(self, obj):
+        t = Expression(Not(obj))
+        t.involution()
+        t = t.terms[0]
+        return t
+
+    def unitize(self):
+        for term in self.terms:
+            if isinstance(term, (Sum, Product)) and len(term.terms) == 1:
+                self.terms.remove(term)
+                self.terms += term.terms
+                return True
+            return False
+
     def testLaw(self, name, law, printed, last):
         law()
-        if last != self.rep:
+        if last != self:
+            self.unitize()
+            # if name != 'Associative': print(f'{name}: {self.rep}')
             print(f'{name}: {self.rep}')
-            last = self.rep
+            last = deepcopy(self)
             return True, last
         return printed, last
 
     def simplify(self):
+        self.cluster()
         print(f'Original: {self.rep}')
 
-        last = self.rep
+        last = deepcopy(self)
         printed = True
         while printed:
             printed=False
             
             printed, last = self.testLaw('Associative', self.cluster, printed, last)
+            if printed: continue
+            printed, last = self.testLaw('Not', self.flip, printed, last)
+            if printed: continue
+            printed, last = self.testLaw('Null', self.null, printed, last)
+            if printed: continue
+            printed, last = self.testLaw('Identity', self.identity, printed, last)
+            if printed: continue
             printed, last = self.testLaw('Idempotent', self.unique, printed, last)
-            printed, last = self.testLaw('Identity/Null', self.identities, printed, last)
+            if printed: continue
+            printed, last = self.testLaw('Involution', self.involution, printed, last)
+            if printed: continue            
+            printed, last = self.testLaw('Inverse', self.inverse, printed, last)
+            if printed: continue
+            printed, last = self.testLaw('De Morgans', self.deMorgans, printed, last)
+            if printed: continue            
+            printed, last = self.testLaw('Absorption', self.absorb, printed, last)
+            if printed: continue 
+            printed, last = self.testLaw('Distributive', self.distribute, printed, last)
+            if printed: continue            
+
+    def flip(self):
+        for term in self.terms:
+            if isinstance(term, Not):
+                if term.term == VAR0:
+                    self.terms.remove(term)
+                    self.terms.append(VAR1)
+                elif term.term == VAR1:
+                    self.terms.remove(term)
+                    self.terms.append(VAR0)
+            if not isinstance(term, Var): term.flip()
+
+    def inverse(self):
+        for term in self.terms:
+            if isinstance(term, Product):
+                for pterm in term.terms:
+                    notted = self.getNot(pterm)
+                    if notted in term.terms:
+                        self.terms.remove(term)
+                        self.terms.append(VAR0)
+                        break
+            elif isinstance(term, Sum):
+                for pterm in term.terms:
+                    notted = self.getNot(pterm)
+                    if notted in term.terms:
+                        self.terms.remove(term)
+                        self.terms.append(VAR1)
+                        break
+            if not isinstance(term, Var): term.inverse()
+
+    def involution(self):
+        for term in self.terms:
+            if isinstance(term, Not):
+                if isinstance(term.term, Not):
+                    self.terms.remove(term)
+                    self.terms.append(term.term.term)
+            if not isinstance(term, Var): term.involution()
+
+    def deMorgans(self):
+        for term in self.terms:
+            if isinstance(term, Not):
+                nterm = term.term
+                if isinstance(nterm, Product):
+                    self.terms.remove(term)
+                    self.terms.append(Sum(*[Not(i) for i in nterm.terms]))
+                elif isinstance(nterm, Sum):
+                    self.terms.remove(term)
+                    self.terms.append(Product(*[Not(i) for i in nterm.terms]))
+            if not isinstance(term, Var): term.deMorgans()
 
     def cluster(self):
         for term in self.terms:
-            if not isinstance(term, (Not, Var)):
-                if len(term.terms) == 1:
-                    self.terms.remove(term)
-                    self.terms += term.terms
-                    break
-
-                for subterm in term.terms:
-                    if type(subterm) == type(term):
-                        term.terms.remove(subterm)
-                        term.terms += subterm.terms
-                term.cluster()
+            if isinstance(term, Sum):
+                tmp = term.terms.copy()
+                for sterm in term.terms:
+                    if isinstance(sterm, Sum):
+                        ind = tmp.index(sterm)
+                        tmp.remove(sterm)
+                        for i in sterm.terms[::-1]: tmp.insert(ind, i)
+                term.terms = tmp.copy()
+            elif isinstance(term, Product):
+                tmp = term.terms.copy()
+                for sterm in term.terms:
+                    if isinstance(sterm, Product):
+                        ind = tmp.index(sterm)
+                        tmp.remove(sterm)
+                        for i in sterm.terms[::-1]: tmp.insert(ind, i)
+                term.terms = tmp.copy()
+            if not isinstance(term, Var): term.cluster()
 
     def unique(self):
         tmp = []
-        for i in self.terms:
-            if i not in tmp: tmp.append(i)
-            if not isinstance(i, Var): i.unique()
+        for term in self.terms:
+            if term not in tmp: tmp.append(term)
+            if not isinstance(term, Var): term.unique()
         self.terms = tmp
 
-    def identities(self):
-        for i in self.terms:
-            if isinstance(i, Product):
-                if VAR0 in i.terms:
-                    self.terms.remove(i)
+    def identity(self):
+        for term in self.terms:
+            if isinstance(term, Product):
+                if VAR1 in term.terms:
+                    term.terms.remove(VAR1)
+            elif isinstance(term, Sum):
+                if VAR0 in term.terms:
+                    term.terms.remove(VAR0)
+            if not isinstance(term, Var): term.identity()
+
+    def null(self):
+        for term in self.terms:
+            if isinstance(term, Product):
+                if VAR0 in term.terms:
+                    self.terms.remove(term)
                     self.terms.append(VAR0)
-                if VAR1 in i.terms:
-                    i.terms.remove(VAR1)
-            elif isinstance(i, Sum):
-                if VAR1 in i.terms:
-                    self.terms.remove(i)
+            elif isinstance(term, Sum):
+                if VAR1 in term.terms:
+                    self.terms.remove(term)
                     self.terms.append(VAR1)
-                if VAR0 in i.terms:
-                    i.terms.remove(VAR0)
-            if not isinstance(i, Var): i.identities()
+            if not isinstance(term, Var): term.null()
+
+    def absorb(self):
+        for term in self.terms:
+            if isinstance(term, Sum):
+                for sterm in term.terms:
+                    if isinstance(sterm, Product):
+                        pterms = sterm.terms
+                        notPterms = [self.getNot(i) for i in pterms]
+                        rest = [i for i in term.terms if i != sterm]
+                        for every in rest:
+                            compareWith = every.terms if isinstance(every, Product) else [every]
+                            match = [i for i in pterms if i in compareWith]
+                            diff = [i for i in pterms if i not in compareWith]
+                            notmatch = [i for i in notPterms if i in compareWith]
+                            notdiff = [i for i in notPterms if i not in compareWith]
+                            # print([i.rep for i in match], [i.rep for i in diff], [i.rep for i in pterms], [i.rep for i in compareWith], [i.rep for i in notPterms], [i.rep for i in notmatch], [i.rep for i in notdiff])
+                            if match == compareWith:
+                                self.terms.remove(term)
+                                extra = [i for i in rest if i != every]
+                                self.terms.append(Sum(Product(*match), *extra))
+                                return 
+
+                            if notmatch == compareWith:
+                                tmp = Expression(Sum(*match, Product(*diff)))
+                                tmp.cluster()
+                                tmp.unique()
+                                tmp = tmp.terms[0]
+                                self.terms.remove(term)
+                                self.terms.append(tmp)
+                                return
+                            
+            if not isinstance(term, Var): term.absorb()
+
+    def distribute(self):
+        for term in self.terms:
+            if isinstance(term, Product):
+                if any(isinstance(i, Sum) for i in term.terms):
+                    lov = []
+                    for pterm in term.terms:
+                        if isinstance(pterm, Sum):
+                            lov.append(pterm.terms)
+                        else:
+                            lov.append([pterm])
+                    prod = list(distributeList(*lov))
+                    fin = Sum(*[Product(*i) for i in prod])
+                    self.terms.remove(term)
+                    self.terms.append(fin) 
+            if not isinstance(term, Var): term.distribute()
 
 class Product(Expression):
     def __init__(self, *args):
@@ -71,7 +246,7 @@ class Product(Expression):
 
     @property
     def rep(self):
-        return '*'.join([i.rep for i in self.terms])
+        return '(' + '*'.join([i.rep for i in self.terms]) + ')'
 
 class Sum(Expression):
     def __init__(self, *args):
@@ -86,26 +261,28 @@ class Not(Expression):
         super().__init__(*args)
         if len(self.terms) > 1:
             raise ValueError(f'Not object has too many terms: {self.terms}')
-        else:
-            self.term = self.terms[0]
 
     @property
     def rep(self):
         return f'¬({"".join([i.rep for i in self.terms])})'
 
-class Var:
-    def __init__(self, v):
-        self.term = v
+    @property
+    def term(self):
+        return self.terms[0]
 
-    def __eq__(self, other):
-        if isinstance(other, Var):
-            return self.term == other.term
-        else:
-            return NotImplemented
+class Var(Expression):
+    def __init__(self, *args):
+        super().__init__(*args)
+        if len(self.terms) > 1:
+            raise ValueError(f'Var object has too many terms: {self.terms}')
 
     @property
     def rep(self):
-        return self.term    
+        return self.term 
+
+    @property
+    def term(self):
+        return self.terms[0]   
 
 
 VAR0 = Var('0')

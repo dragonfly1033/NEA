@@ -41,9 +41,16 @@ def isUnit(s):
     return False
 
 def unitize(s):
+    n = s
     if s[0] == '(' and s[-1] == ')':
-        return s[1:-1]
-    return s
+        n = s[1:-1]
+    for i in n:
+        if i in ['(', ')']:
+            if i == ')':
+                return s
+            else:
+                break
+    return n
 
 def findMinimumPriority(s):
     minn = (999,999)
@@ -60,12 +67,13 @@ def addExpr(s, node):
     s = unitize(s)
     if not isUnit(s):
         prio, index = findMinimumPriority(s)
-         
         node.addVal(s[index])
+
         if s[index] == '¬':
             node.addChild('#')
-            under = re.findall(r'¬([A-Z])', s[index:]) + re.findall(r'¬\(([A-Z*+¬()]+)\)[+*]', s[index:]) + re.findall(r'¬\(([A-Z*+¬()]+)\)(?:$)', s[index:])
-            under = under[0]
+            # under = re.findall(r'¬([A-Z10])', s[index:]) + re.findall(r'¬\(([A-Z*+¬()10]+)\)[+*]', s[index:]) + re.findall(r'¬\(([A-Z*+¬()10]+)\)(?:$)', s[index:])
+            under = unitize(s[index+1:])
+            # print(s, s[index], under)
             if not isUnit(under):
                 node.addChild(None)
                 under = addExpr(under, node.right)
@@ -102,8 +110,11 @@ def parse(s):
             op, v1, v2 = unitize(units[i]).split(',')
         except ValueError:
             units[i] = units[units[i]]
-            continue
-        
+            if isinstance(units[i], (Not, Expression, Product, Sum)):
+                continue
+            else:
+                op, v1, v2 = unitize(units[i]).split(',')
+
         if v1 in units:
             v1 = units[v1]
         else:
