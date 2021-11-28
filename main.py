@@ -1,7 +1,6 @@
 import sys
 sys.path.insert(0, './parsing')
 import pygame as pg
-from math import sqrt, sin, cos, radians, degrees, pi
 from graphics import pygameutil as pgu
 from parsing import parse
 

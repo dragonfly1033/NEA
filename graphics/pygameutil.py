@@ -9,7 +9,7 @@ class Button:
     def __init__(self, screen, text, rect, font, inactiveColour, activeColour, fg, borderColour, func, borderWidth=3, actionButton=False, parent=None, zlayer=0):
         self.display = screen
         self.colours = [inactiveColour, activeColour]
-        self.rect = rect
+        self.rect = list(rect)
         self.labelRect = [v+(borderWidth*2) if i ==1 else v+(borderWidth*2) if i==0 else v-(borderWidth*4) for i, v in enumerate(self.rect)]
         self.text = text
         self.fg = fg
@@ -19,7 +19,7 @@ class Button:
         self.font = font
         self.active = 0
         self.zlayer = zlayer
-        if isinstance(screen, Screen):
+        if isinstance(screen, (Screen, ScrollableSurface)):
             screen.addWidget(self)
             if actionButton:
                 screen.actionButton = self
@@ -30,36 +30,42 @@ class Button:
         self.show()
 
     def show(self):
-        pg.draw.rect(self.display, self.borderColour, self.rect)
-        pg.draw.rect(self.display, self.colours[self.active], (self.rect[0]+self.borderWidth, self.rect[1]+self.borderWidth, self.rect[2]-(2*self.borderWidth), self.rect[3]-(2*self.borderWidth)))
-        self.button_text1 = Label(self.display, self.text, self.labelRect, self.font, self.colours[self.active], self.fg, align='centre', justify='centre', addSelf=False)
+        if isinstance(self.display, ScrollableSurface):
+            display = self.display.contentSurface
+        else:
+            display = self.display
+        pg.draw.rect(display, self.borderColour, self.rect)
+        pg.draw.rect(display, self.colours[self.active], (self.rect[0]+self.borderWidth, self.rect[1]+self.borderWidth, self.rect[2]-(2*self.borderWidth), self.rect[3]-(2*self.borderWidth)))
+        self.button_text1 = Label(display, self.text, self.labelRect, self.font, self.colours[self.active], self.fg, align='centre', justify='centre', addSelf=False)
 
     def isOver(self, x, y):
         if self.rect[0]<=x<=self.rect[0]+self.rect[2]:
             if self.rect[1]<=y<=self.rect[1]+self.rect[3]:
                 return True
-
         return False
 
     def update(self, event):
         x, y = pg.mouse.get_pos()
+        if isinstance(self.display, ScrollableSurface):
+            x -= self.display.showRect[0]+self.display.offset[0]
+            y -= self.display.showRect[1]+self.display.offset[1]
         over = self.isOver(x, y)
         if event.type == pg.MOUSEMOTION:
-            old = self.active
             if over:
                 self.active = 1
             else:
                 self.active = 0
         if event.type == pg.MOUSEBUTTONDOWN:
-            if over:
-                self.func()
+            if event.button == 1:
+                if over:
+                    self.func()
         self.show()
 
 
 class Input:
     def __init__(self, screen, rect, font, colours, fg, borderColour, borderWidth=3, text='', zlayer=0):
         self.display = screen
-        self.rect = rect
+        self.rect = list(rect)
         self.active = 0
         self.activated = 0
         self.cursorSpeed = 500
@@ -76,7 +82,7 @@ class Input:
         self.charBuffer = 3
         self.textR = self.font.render(self.text, False, self.colours[1])
         self.zlayer = zlayer
-        if isinstance(screen, Screen):
+        if isinstance(screen, (Screen, ScrollableSurface)):
             screen.addWidget(self)
         self.show()
 
@@ -183,14 +189,14 @@ class Label:
         self.display = screen
         self.text = text
         self.font = font
-        self.rect = rect
+        self.rect = list(rect)
         self.bg = bg
         self.fg = fg
         self.align = align
         self.justify = justify
         self.zlayer = zlayer
         self.update()
-        if isinstance(screen, Screen) and addSelf:
+        if isinstance(screen, (Screen, ScrollableSurface)) and addSelf:
             screen.addWidget(self)
 
     def show(self):
@@ -335,17 +341,23 @@ class Screen(pg.Surface):
         super().__init__(DIM)
         self.DIM = DIM
         self.widgets = []
+        self.embed = []
         self.actionButton = None
         
     def addWidget(self, widget):
         self.widgets.append(widget)
         self.widgets = sorted(self.widgets, key=lambda x: x.zlayer)
 
+    def addEmbed(self, embed):
+        self.embed.append(embed)
+        self.embed = sorted(self.embed, key=lambda x: x.zlayer)
+
     def clear(self):
         self.widgets.clear()
 
-    def event_update(self, event):
-        rets = []
+    def event_update(self, event, dt):
+        for embed in self.embed:
+            embed.update(event, dt)
         for widget in self.widgets:
             if isinstance(widget, (Input, Button, DraggablePoint, DraggableRect)):
                 widget.update(event)
@@ -355,6 +367,9 @@ class Screen(pg.Surface):
                     self.actionButton.func()
     
     def update(self):
+        for embed in self.embed:
+            embed.clear()
+
         for widget in self.widgets:
             if isinstance(widget, (Input, DraggablePoint, DraggableRect, Button)):
                 widget.show()
@@ -363,6 +378,131 @@ class Screen(pg.Surface):
             elif isinstance(widget, (LayeredSurface,)):
                 self.blit(widget, (0,0))
 
+        for embed in self.embed:
+            embed.show()
+
+
+class ScrollableSurface(pg.Surface):
+    def __init__(self, screen, x, y, DIM, bg, inactiveColour, activeColour, barWidth=5, padding=10):
+        super().__init__(DIM)
+        self.display = screen
+        self.showRect = (x, y, DIM[0], DIM[1])
+        self.bg = bg
+        self.colours = [inactiveColour, activeColour]
+        self.zlayer = 0
+        self.scrollv = 1
+        self.widgets = []
+        self.contentSurface = pg.Surface(DIM)
+        self.padding = padding
+        self.excess = [0,0]
+        self.offset = [self.padding, self.padding]
+        self.barHeight = 100
+        self.barw = barWidth
+        self.barStart = self.padding
+        self.barSnap = 5
+        self.barGrab = 0
+        self.ratio = 1
+        if isinstance(self.display, Screen):
+            self.display.addEmbed(self)
+    
+    @property
+    def contentRect(self):
+        try:
+            minx = min(self.widgets, key=lambda x: x.rect[0]).rect[0]
+            miny = min(self.widgets, key=lambda x: x.rect[1]).rect[1]
+            maxx = max(self.widgets, key=lambda x: x.rect[0]+x.rect[2])
+            maxy = max(self.widgets, key=lambda x: x.rect[1]+x.rect[3])
+            maxx = maxx.rect[0]+maxx.rect[2]
+            maxy = maxy.rect[1]+maxy.rect[3]
+
+            x = minx + self.showRect[0]
+            y = miny + self.showRect[1]
+            w = maxx
+            h = maxy
+
+            w = min(w, self.showRect[2]-(3*self.padding)-self.barw)
+
+            return (x, y, w, h)
+        except:
+            return self.showRect
+
+    def addWidget(self, other):
+        self.widgets.append(other)
+        self.display.addWidget(other)
+        self.contentSurface = pg.transform.scale(self.contentSurface, (self.contentRect[2], self.contentRect[3]))
+        self.excess = [self.contentRect[2] + self.padding - self.showRect[2], self.contentRect[3] + self.padding - self.showRect[3]]
+        self.barHeight = (self.showRect[3]**2)//(self.contentRect[3])
+        if self.barHeight < 20:
+            self.barHeight = 20
+        print(self.contentRect)
+
+    def isOver(self):
+        x, y = pg.mouse.get_pos()
+        if self.showRect[0]<=x<=self.showRect[0]+self.showRect[2]:
+            if self.showRect[1]<=y<=self.showRect[1]+self.showRect[3]:
+                return True
+        return False
+
+    def clear(self):
+        self.fill(self.bg)
+        self.contentSurface.fill(self.bg)
+
+    def update(self, event, dt):
+        keys = pg.key.get_pressed()
+        xstrength = 1
+        ystrength = 1
+        if event.type == pg.MOUSEWHEEL:
+            xstrength = abs(event.x)
+            ystrength = abs(event.y)
+            if xstrength == 0: xstrength = 1
+            if ystrength == 0: ystrength = 1
+
+        if event.type == pg.MOUSEBUTTONDOWN:
+            if self.isOver():
+                if event.button == 4:
+                    print('')
+                    if keys[pg.K_RCTRL]:
+                        self.ratio += self.scrollv * xstrength * dt
+                    else:
+                        self.ratio += self.scrollv * ystrength * dt
+                if event.button == 5:
+                    if keys[pg.K_RCTRL]:
+                        self.ratio -= self.scrollv * xstrength * dt
+                    else:
+                        self.ratio -= self.scrollv * ystrength * dt
+
+                self.ratio = min(max(self.ratio, 0), 1)
+
+            if event.button == 1:
+                x, y = pg.mouse.get_pos()
+                x, y = x - self.showRect[0], y - self.showRect[1]
+                if self.bar.width < 3:
+                    bx, by = self.bar.x, self.bar.y
+                    dx = abs(x-bx)
+                    if dx < self.barSnap and by<y<by+self.bar.height:
+                        self.barGrab = 1
+                else:
+                    if self.bar.collidepoint(x, y):
+                        self.barGrab = 1
+        if event.type == pg.MOUSEBUTTONUP:
+            if event.button == 1:
+                if self.barGrab:
+                    self.barGrab = 0
+        if event.type == pg.MOUSEMOTION:
+            if self.barGrab:
+                x, y = pg.mouse.get_pos()
+                y -= self.showRect[1]
+                self.ratio = 1 - (y-(2*self.padding))/(self.showRect[3]-(2*self.padding)-self.barHeight)
+                self.ratio = min(max(self.ratio, 0), 1)
+                self.show()
+
+    def show(self):
+        barx = self.showRect[2]-self.padding-self.barw
+        self.offset[1] = (self.ratio) * (self.padding + self.excess[1]) - self.excess[1]
+        self.barStart = (1-self.ratio) * (self.showRect[3]-(2*self.padding)-self.barHeight) + self.padding
+        self.blit(self.contentSurface, (self.offset[0], self.offset[1]))
+        self.bar = pg.draw.rect(self, self.colours[self.barGrab], (barx, self.barStart, self.barw, self.barHeight))
+        self.display.blit(self, (self.showRect[0], self.showRect[1]))
 
 def doNothing():
 	pass
@@ -386,10 +526,14 @@ def mainScreenSetup():
 pg.init()
 pg.font.init()
 
-smallFont = pg.font.SysFont('Calibri', 12)
+smallFont = pg.font.SysFont('Calibri', 16)
 medFont = pg.font.SysFont('Calibri', 24)
 largeFont = pg.font.SysFont('Calibri', 36)
-DIM = (1520, 600)
+vLargeFont = pg.font.SysFont('Calibri', 48)
+subtitleFont = pg.font.SysFont('Calibri', 86)
+titleFont = pg.font.SysFont('Calibri', 121)
+
+DIM = (1450, 725)
 
 display = pg.display.set_mode(DIM)
 clock = pg.time.Clock()
