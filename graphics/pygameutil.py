@@ -93,11 +93,15 @@ class Input:
         return self.getTextWidth() > self.rect[2] - (2*self.borderWidth) - self.textOffset
 
     def show(self):
-        pg.draw.rect(self.display, self.borderColour, self.rect)
-        pg.draw.rect(self.display, self.colours[self.active], (self.rect[0]+self.borderWidth, self.rect[1]+self.borderWidth, self.rect[2]-(2*self.borderWidth), self.rect[3]-(2*self.borderWidth)))
+        if isinstance(self.display, ScrollableSurface):
+            display = self.display.contentSurface
+        else:
+            display = self.display
+        pg.draw.rect(display, self.borderColour, self.rect)
+        pg.draw.rect(display, self.colours[self.active], (self.rect[0]+self.borderWidth, self.rect[1]+self.borderWidth, self.rect[2]-(2*self.borderWidth), self.rect[3]-(2*self.borderWidth)))
         self.text_dim = self.textR.get_rect()  
         new_h = (self.rect[3]/2)-(self.text_dim.height/2)+self.rect[1]
-        self.display.blit(self.textR, (self.rect[0]+self.textOffset, new_h))
+        display.blit(self.textR, (self.rect[0]+self.textOffset, new_h))
         self.show_cursor()
     
     def show_cursor(self):
@@ -200,8 +204,12 @@ class Label:
             screen.addWidget(self)
 
     def show(self):
-        pg.draw.rect(self.display, self.bg, self.rect)
-        self.display.blit(self.label, self.label_rect)
+        if isinstance(self.display, ScrollableSurface):
+            display = self.display.contentSurface
+        else:
+            display = self.display
+        pg.draw.rect(display, self.bg, self.rect)
+        display.blit(self.label, self.label_rect)
 
     def update(self):
         
@@ -355,9 +363,9 @@ class Screen(pg.Surface):
     def clear(self):
         self.widgets.clear()
 
-    def event_update(self, event, dt):
+    def event_update(self, event):
         for embed in self.embed:
-            embed.update(event, dt)
+            embed.update(event)
         for widget in self.widgets:
             if isinstance(widget, (Input, Button, DraggablePoint, DraggableRect)):
                 widget.update(event)
@@ -390,13 +398,13 @@ class ScrollableSurface(pg.Surface):
         self.bg = bg
         self.colours = [inactiveColour, activeColour]
         self.zlayer = 0
-        self.scrollv = 1
+        self.scrollv = 0.04
         self.widgets = []
         self.contentSurface = pg.Surface(DIM)
         self.padding = padding
         self.excess = [0,0]
         self.offset = [self.padding, self.padding]
-        self.barHeight = 100
+        self.barHeight = 0
         self.barw = barWidth
         self.barStart = self.padding
         self.barSnap = 5
@@ -434,7 +442,6 @@ class ScrollableSurface(pg.Surface):
         self.barHeight = (self.showRect[3]**2)//(self.contentRect[3])
         if self.barHeight < 20:
             self.barHeight = 20
-        print(self.contentRect)
 
     def isOver(self):
         x, y = pg.mouse.get_pos()
@@ -447,7 +454,7 @@ class ScrollableSurface(pg.Surface):
         self.fill(self.bg)
         self.contentSurface.fill(self.bg)
 
-    def update(self, event, dt):
+    def update(self, event):
         keys = pg.key.get_pressed()
         xstrength = 1
         ystrength = 1
@@ -460,16 +467,15 @@ class ScrollableSurface(pg.Surface):
         if event.type == pg.MOUSEBUTTONDOWN:
             if self.isOver():
                 if event.button == 4:
-                    print('')
                     if keys[pg.K_RCTRL]:
-                        self.ratio += self.scrollv * xstrength * dt
+                        self.ratio += self.scrollv * xstrength
                     else:
-                        self.ratio += self.scrollv * ystrength * dt
+                        self.ratio += self.scrollv * ystrength
                 if event.button == 5:
                     if keys[pg.K_RCTRL]:
-                        self.ratio -= self.scrollv * xstrength * dt
+                        self.ratio -= self.scrollv * xstrength
                     else:
-                        self.ratio -= self.scrollv * ystrength * dt
+                        self.ratio -= self.scrollv * ystrength
 
                 self.ratio = min(max(self.ratio, 0), 1)
 

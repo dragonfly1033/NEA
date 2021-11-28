@@ -59,40 +59,61 @@ class Expression:
         if last != self:
             self.unitize()
             # if name != 'Associative': print(f'{name}: {self.rep}')
-            print(f'{name}: {self.rep}')
+            out = f'{name}: {self.rep}'
             last = deepcopy(self)
-            return True, last
-        return printed, last    
+            return True, last, out
+        self.unitize()
+        return printed, last, None 
 
     def simplify(self):
-            self.cluster()
-            print(f'Original: {self.rep}')
-
-            last = deepcopy(self)
-            printed = True
-            while printed:
-                printed=False
-                
-                printed, last = self.testLaw('Associative', self.cluster, printed, last)
-                if printed: continue
-                printed, last = self.testLaw('Not', self.flip, printed, last)
-                if printed: continue
-                printed, last = self.testLaw('Null', self.null, printed, last)
-                if printed: continue
-                printed, last = self.testLaw('Identity', self.identity, printed, last)
-                if printed: continue
-                printed, last = self.testLaw('Idempotent', self.unique, printed, last)
-                if printed: continue
-                printed, last = self.testLaw('Involution', self.involution, printed, last)
-                if printed: continue            
-                printed, last = self.testLaw('Inverse', self.inverse, printed, last)
-                if printed: continue
-                printed, last = self.testLaw('De Morgans', self.deMorgans, printed, last)
-                if printed: continue            
-                printed, last = self.testLaw('Absorption', self.absorb, printed, last)
-                if printed: continue 
-                printed, last = self.testLaw('Distributive', self.distribute, printed, last)
-                if printed: continue        
+        self.cluster()
+        outs = []
+        last = deepcopy(self)
+        printed = True
+        while printed:
+            printed=False
+            
+            printed, last, out = self.testLaw('Associative', self.cluster, printed, last)
+            if printed:
+                outs.append(out)
+                continue
+            printed, last, out = self.testLaw('Not', self.flip, printed, last)
+            if printed:
+                outs.append(out)
+                continue
+            printed, last, out = self.testLaw('Null', self.null, printed, last)
+            if printed:
+                outs.append(out)
+                continue
+            printed, last, out = self.testLaw('Identity', self.identity, printed, last)
+            if printed:
+                outs.append(out)
+                continue
+            printed, last, out = self.testLaw('Idempotent', self.unique, printed, last)
+            if printed:
+                outs.append(out)
+                continue
+            printed, last, out = self.testLaw('Involution', self.involution, printed, last)
+            if printed:
+                outs.append(out)
+                continue            
+            printed, last, out = self.testLaw('Inverse', self.inverse, printed, last)
+            if printed:
+                outs.append(out)
+                continue
+            printed, last, out = self.testLaw('De Morgans', self.deMorgans, printed, last)
+            if printed:
+                outs.append(out)
+                continue            
+            printed, last, out = self.testLaw('Absorption', self.absorb, printed, last)
+            if printed:
+                outs.append(out)
+                continue 
+            printed, last, out = self.testLaw('Distributive', self.distribute, printed, last)
+            if printed:
+                outs.append(out)
+                continue  
+        return outs      
 
     def flip(self):
         for term in self.terms:

@@ -12,16 +12,19 @@ def changeScreen(new):
         curScreen = simplifierScreen
 
 
-def simplifierScreenSetup():
+def simplifierScreenSetup(steps=[]):
     simplifierScreen.fill(BACKGROUNDC)
     buttonW = 600
     buttonH = 100
     gap = 30
     heading = pgu.Label(simplifierScreen, 'Boolean Simplification', (0, 0, DIM[0], DIM[1]/3), subtitleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
-    homeButton = pgu.Button(simplifierScreen, 'Home', (20, 20, 150, 50), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
-    entry = pgu.Input(simplifierScreen, ((DIM[0]-buttonW)/2, (DIM[1]-buttonH)/2 - 50, buttonW, buttonH), vLargeFont, [BACKGROUNDC, LBLUE], TEXTC, BORDERC, text='Enter Expression')
-    simplifyButton = pgu.Button(simplifierScreen, 'Simplify', ((DIM[0]-buttonW)/2 + buttonW + gap, (DIM[1]-buttonH)/2 - 50, 150, buttonH), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: simplify(entry.text), actionButton=True)
-
+    homeButton = pgu.Button(simplifierScreen, 'Home', (20, 20, 125, 70), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
+    entry = pgu.Input(simplifierScreen, ((DIM[0]-buttonW-150-gap)/2, (DIM[1]-buttonH)/2 - 100, buttonW, buttonH), vLargeFont, [BACKGROUNDC, LBLUE], TEXTC, BORDERC, text='Enter Expression')
+    simplifyButton = pgu.Button(simplifierScreen, 'Simplify', ((DIM[0]-buttonW-150-gap)/2 + buttonW + gap, (DIM[1]-buttonH)/2 - 100, 150, buttonH), largeFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: simplify(entry.text), actionButton=True)
+    stepsBox = pgu.ScrollableSurface(simplifierScreen, (DIM[0]-buttonW-150-gap)/2, (DIM[1]-buttonH)/2 - 50 + buttonH + gap, (buttonW+200+gap, DIM[1]-((DIM[1]-buttonH)/2 -50 + buttonH + gap*2)), BACKGROUNDC, BORDERC, TEXTC)
+    if len(steps) > 0: pgu.Label(simplifierScreen, f'Answer: {steps[-1].split(":")[1]}', ((DIM[0]-buttonW-150-gap)/2 + 10, (DIM[1]-buttonH)/2 - 100 + buttonH, buttonW, buttonH), medFont, BACKGROUNDC, TEXTC)
+    for i, step in enumerate(steps):
+        pgu.Label(stepsBox, step, (0, 60*i, buttonW, 50), medFont, BACKGROUNDC, TEXTC)
 
 def mainScreenSetup():
     mainScreen.fill(BACKGROUNDC)
@@ -36,7 +39,10 @@ def mainScreenSetup():
 
 def simplify(s):
     ss = parse.parse(s)
-    ss.simplify()
+    steps = ss.simplify()
+    ss.typeList()
+    simplifierScreenSetup(steps=steps)
+
 
 pg.init()
 pg.font.init()
