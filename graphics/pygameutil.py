@@ -187,9 +187,28 @@ class Input:
                 self.textR = self.font.render(self.text[self.homeCursorPos:self.endCursorPos+1], True, self.fg)
                 # print(self.homeCursorPos, self.cursorPos, self.endCursorPos, len(self.text))
 
-    
+
+class ImageRect:
+    def __init__(self, screen, image, x, y):
+        self.display = screen
+        self.image = image
+        self.x = x
+        self.y = y
+        self.rect = (self.x, self.y, self.image.get_width(), self.image.get_height())
+        self.zlayer = 0
+        if isinstance(screen, (ScrollableSurface, Screen)):
+            self.display.addWidget(self)
+
+    def show(self):
+        if isinstance(self.display, ScrollableSurface):
+            display = self.display.contentSurface
+        else:
+            display = self.display
+        display.blit(self.image, (self.x, self.y))
+
+
 class Label:
-    def __init__(self, screen, text, rect, font, bg, fg, align='left', justify='centre', zlayer=0, addSelf=True):
+    def __init__(self, screen, text, rect, font, bg, fg, align='left', justify='centre', zlayer=0, addSelf=True, border=False, borderWidth=3, borderColour=(0,0,0)):
         self.display = screen
         self.text = text
         self.font = font
@@ -199,6 +218,9 @@ class Label:
         self.align = align
         self.justify = justify
         self.zlayer = zlayer
+        self.border = border 
+        self.borderWidth = borderWidth
+        self.borderColour = borderColour
         self.update()
         if isinstance(screen, (Screen, ScrollableSurface)) and addSelf:
             screen.addWidget(self)
@@ -208,7 +230,12 @@ class Label:
             display = self.display.contentSurface
         else:
             display = self.display
-        pg.draw.rect(display, self.bg, self.rect)
+        if self.border:
+            borderColour = self.borderColour
+        else:
+            borderColour = self.bg
+        pg.draw.rect(display, borderColour, self.rect)
+        pg.draw.rect(display, self.bg, (self.rect[0]+self.borderWidth, self.rect[1]+self.borderWidth, self.rect[2]-2*self.borderWidth, self.rect[3]-2*self.borderWidth))
         display.blit(self.label, self.label_rect)
 
     def update(self):
@@ -379,7 +406,7 @@ class Screen(pg.Surface):
             embed.clear()
 
         for widget in self.widgets:
-            if isinstance(widget, (Input, DraggablePoint, DraggableRect, Button)):
+            if isinstance(widget, (Input, DraggablePoint, DraggableRect, Button, ImageRect)):
                 widget.show()
             elif isinstance(widget, (Label,)):
                 widget.update()
@@ -394,7 +421,7 @@ class ScrollableSurface(pg.Surface):
     def __init__(self, screen, x, y, DIM, bg, inactiveColour, activeColour, barWidth=5, padding=10):
         super().__init__(DIM)
         self.display = screen
-        self.showRect = (x, y, DIM[0], DIM[1])
+        self.showRect = (int(x), int(y), int(DIM[0]), int(DIM[1]))
         self.bg = bg
         self.colours = [inactiveColour, activeColour]
         self.zlayer = 0
@@ -430,7 +457,7 @@ class ScrollableSurface(pg.Surface):
 
             w = min(w, self.showRect[2]-(3*self.padding)-self.barw)
 
-            return (x, y, w, h)
+            return (int(x), int(y), int(w), int(h))
         except:
             return self.showRect
 
@@ -453,6 +480,11 @@ class ScrollableSurface(pg.Surface):
     def clear(self):
         self.fill(self.bg)
         self.contentSurface.fill(self.bg)
+
+    def removeAll(self):
+        for i in self.widgets:
+            self.display.widgets.remove(i)
+        self.widgets.clear()
 
     def update(self, event):
         keys = pg.key.get_pressed()
@@ -482,7 +514,7 @@ class ScrollableSurface(pg.Surface):
             if event.button == 1:
                 x, y = pg.mouse.get_pos()
                 x, y = x - self.showRect[0], y - self.showRect[1]
-                if self.bar.width < 3:
+                if self.bar.width < 7:
                     bx, by = self.bar.x, self.bar.y
                     dx = abs(x-bx)
                     if dx < self.barSnap and by<y<by+self.bar.height:

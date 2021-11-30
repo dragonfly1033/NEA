@@ -138,3 +138,6 @@ def parse(s):
     return final
 
 
+
+# for i in d:
+#     print(i[1].getLatex())
