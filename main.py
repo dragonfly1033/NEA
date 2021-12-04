@@ -2,7 +2,9 @@ import sys
 sys.path.insert(0, 'parsing')
 import pygame as pg
 import requests
+from urllib import request
 from graphics import pygameutil as pgu
+from graphics import widgets as wid
 from parsing import parse
 from parsing.tokens import *
 
@@ -26,7 +28,7 @@ def loginScreenSetup():
     start = (DIM[1]-buttonH)/2 - 100
     loginScreen.fill(BACKGROUNDC)
     heading = pgu.Label(loginScreen, 'Log in', (0, 0, DIM[0], DIM[1]/3), subtitleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
-    homeButton = pgu.Button(loginScreen, 'Home', (20, 20, 125, 70), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
+    homeButton = pgu.Button(loginScreen, 'Home', (15, 15, 125, 50), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
 
 def tableScreenSetup():
     def buttonFunc(s, tb):
@@ -35,23 +37,31 @@ def tableScreenSetup():
             errorLabel.text = 'Error with input'
         else:
             errorLabel.text = ''
-            drawTable(s, tb)
+            ret = drawTable(s, tb)
+            if not ret:
+                errorLabel.text = 'Too Many Variables'
+            else:
+                errorLabel.text = ''
     buttonW = 600
     buttonH = 100
     gap = 30
     start = (DIM[1]-buttonH)/2 - 100
     tableScreen.fill(BACKGROUNDC)
     heading = pgu.Label(tableScreen, 'Truth Table', (0, 0, DIM[0], DIM[1]/3), subtitleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
-    homeButton = pgu.Button(tableScreen, 'Home', (20, 20, 125, 70), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
+    homeButton = pgu.Button(tableScreen, 'Home', (15, 15, 125, 50), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
     entry = pgu.Input(tableScreen, ((DIM[0]-buttonW-150-gap)/2, start, buttonW, buttonH), vLargeFont, [BACKGROUNDC, LBLUE], TEXTC, BORDERC, text='Enter Expression')
-    errorLabel = pgu.Label(simplifierScreen, '', ((DIM[0]-buttonW-150-gap)/2 - gap - 150, start, 150, buttonH), largeFont, BACKGROUNDC, TEXTC, align='right')    
+    errorLabel = pgu.Label(tableScreen, '', (gap/2, start, (DIM[0]-buttonW-150-gap)/2 - gap, buttonH), largeFont, BACKGROUNDC, TEXTC, align='right')    
     tableBox = pgu.ScrollableSurface(tableScreen, (DIM[0]-buttonW-150-gap)/2, (DIM[1]-buttonH)/2 - 50 + buttonH + gap, (buttonW+200+gap, DIM[1]-((DIM[1]-buttonH)/2 -50 + buttonH + gap*2)), BACKGROUNDC, BORDERC, TEXTC)
-    simplifyButton = pgu.Button(tableScreen, 'Simplify', ((DIM[0]-buttonW-150-gap)/2 + buttonW + gap, start, 150, buttonH), largeFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: buttonFunc(entry.text, tableBox), actionButton=True)
+    tabulateButton = pgu.Button(tableScreen, 'Tabulate', ((DIM[0]-buttonW-150-gap)/2 + buttonW + gap, start, 150, buttonH), largeFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: buttonFunc(entry.text, tableBox), actionButton=True)
 
 def logicScreenSetup():
     logicScreen.fill(BACKGROUNDC)
-    homeButton = pgu.Button(logicScreen, 'Home', (20, 20, 125, 70), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
-    widgetBox = pgu.ScrollableSurface(logicScreen, 0, 0, (250, DIM[1]), DBLUE, BORDERC, TEXTC, padding=8)
+    ribbonBorder = pg.draw.rect(logicScreen, BORDERC, (0, 0, DIM[0], 80))
+    ribbon = pg.draw.rect(logicScreen, LBLUE, (0, 0, DIM[0], 80-3))
+    homeButton = pgu.Button(logicScreen, 'Home', (15, 15, 125, 50), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
+    widgetBoxBorder = pg.draw.rect(logicScreen, BORDERC, (0, 80, 250, DIM[1]))
+    widgetBox = pgu.ScrollableSurface(logicScreen, 0, 80, (250-3, DIM[1]), BACKGROUNDC, BORDERC, TEXTC, padding=8)
+    sandboxWindow = wid.Grid(logicScreen, 250, 80, (DIM[0]-250, DIM[1]-80), BACKGROUNDC, TEXTC)
 
 def simplifierScreenSetup(steps=[]):
     def buttonFunc(s):
@@ -67,7 +77,7 @@ def simplifierScreenSetup(steps=[]):
     gap = 30
     start = (DIM[1]-buttonH)/2 - 100
     heading = pgu.Label(simplifierScreen, 'Boolean Simplification', (0, 0, DIM[0], DIM[1]/3), subtitleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
-    homeButton = pgu.Button(simplifierScreen, 'Home', (20, 20, 125, 70), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
+    homeButton = pgu.Button(simplifierScreen, 'Home', (15, 15, 125, 50), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
     entry = pgu.Input(simplifierScreen, ((DIM[0]-buttonW-150-gap)/2, start, buttonW, buttonH), vLargeFont, [BACKGROUNDC, LBLUE], TEXTC, BORDERC, text='Enter Expression')
     simplifyButton = pgu.Button(simplifierScreen, 'Simplify', ((DIM[0]-buttonW-150-gap)/2 + buttonW + gap, start, 150, buttonH), largeFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: buttonFunc(entry.text), actionButton=True)
     errorLabel = pgu.Label(simplifierScreen, '', ((DIM[0]-buttonW-150-gap)/2 - gap - 150, start, 150, buttonH), largeFont, BACKGROUNDC, TEXTC, align='right')    
@@ -77,8 +87,10 @@ def simplifierScreenSetup(steps=[]):
         createPNG(step[1])
         tmp = pg.image.load(f'tmpimages\\tmp.png')
         tmp = tmp.convert()
-        tmpI = pgu.ImageRect(stepsBox, tmp, 0, h)
-        h += tmp.get_height() + stepsBox.padding/2
+        tmp.set_colorkey((255,255,255))
+        tmpl = pgu.Label(stepsBox, f'{step[0]}: ', (0, h, stepsBox.showRect[2], 50), medFont, BACKGROUNDC, TEXTC)
+        tmpI = pgu.ImageRect(stepsBox, tmp, 0, h + 50)
+        h += tmp.get_height() + stepsBox.padding/2 + 50
 
 def mainScreenSetup():
     mainScreen.fill(BACKGROUNDC)
@@ -95,9 +107,7 @@ def mainScreenSetup():
 
 def createPNG(step):
     latex = step.getLatex()
-    r = requests.get(f'https://latex.codecogs.com/png.image?\\dpi{{300}}{latex}')
-    with open(f'tmpimages\\tmp.png', 'wb') as f:
-        f.write(r.content)
+    r = request.urlretrieve(f'https://latex.codecogs.com/png.image?\\dpi{{200}}{latex}', 'tmpimages\\tmp.png')
 
 def simplify(s):
     if validateExpression(s):
@@ -115,8 +125,10 @@ def drawTable(s, tb):
     varss = list(set(list(varss)))
     varss = sorted(varss)
     noOfVars = len(varss)
+    if noOfVars > 6:
+        return False
     maxLen = len(bin(2**noOfVars - 1)[2:])
-    cellW = totalW//(noOfVars+3)
+    cellW = min(totalW//(noOfVars+3), totalW//(8))
     new = s
     for i, v in enumerate(varss):
         pgu.Label(tb, v, ((cellW-3)*i, 0, cellW, cellW), smallFont, BACKGROUNDC, TEXTC, align='centre', border=True, borderColour=BORDERC)
@@ -134,6 +146,7 @@ def drawTable(s, tb):
         for x in range(len(vals)):
             pgu.Label(tb, vals[x], ((cellW-3)*x, cellW - 3 + (cellW-3)*y, cellW, cellW), smallFont, BACKGROUNDC, TEXTC, align='centre', border=True, borderColour=BORDERC)
         pgu.Label(tb, output, ((cellW-3)*len(vals), cellW - 3 + (cellW-3)*y, cellW*2, cellW), smallFont, BACKGROUNDC, TEXTC, align='centre', border=True, borderColour=BORDERC)
+    return True
 
 def validateExpression(s):
     try:
@@ -179,7 +192,7 @@ loginScreenSetup()
 curScreen = mainScreen
 run = True
 while run:
-    curScreen.fill(BACKGROUNDC)
+    # curScreen.fill(BACKGROUNDC)
     for event in pg.event.get():
         if event.type == pg.QUIT:
             run = False

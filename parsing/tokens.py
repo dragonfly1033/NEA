@@ -66,10 +66,12 @@ class Expression:
             if isinstance(term, (Sum, Product)) and len(term.terms) == 1:
                 self.terms.remove(term)
                 self.terms += term.terms
+            if not isinstance(term, (Var, str)): term.unitize()
             
 
     def testLaw(self, name, law, printed, last):
         law()
+        self.unitize()
         if last != self:
             # if name != 'Associative': print(f'{name}: {self.rep}')
             # print(f'{name}: {self.rep}')
@@ -128,7 +130,10 @@ class Expression:
                 outs.append(out)
                 continue 
         self.unitize()
-        outs[-1][1] = self
+        if len(outs)>0:
+            outs[-1][1] = self
+        else:
+            outs.append(['', self])
         return outs      
 
     def flip(self):
