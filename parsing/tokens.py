@@ -22,21 +22,6 @@ class Expression:
     def rep(self):
         return ''.join([i.rep for i in self.terms])
 
-    def getLatex(self):
-        if isinstance(self, Product):
-            terms = [i.getLatex() for i in self.terms]
-            return '%20\\cdot%20'.join(terms)
-        elif isinstance(self, Sum):
-            terms = [i.getLatex() for i in self.terms]
-            return '\\left(' + '+'.join(terms) + '\\right)'
-        elif isinstance(self, Not):
-            term = self.term.getLatex()
-            return f'\\overline{{{term}}}'
-        elif isinstance(self, Var):
-            return self.term
-        elif isinstance(self, Expression):
-            return self.terms[0].getLatex()
-
     def typeList(self):
         print(self.terms)
         for term in self.terms:
@@ -66,23 +51,28 @@ class Expression:
             if isinstance(term, (Sum, Product)) and len(term.terms) == 1:
                 self.terms.remove(term)
                 self.terms += term.terms
+<<<<<<< HEAD
             if not isinstance(term, (Var, str)): term.unitize()
             
+=======
+                return True
+            return False
+>>>>>>> parent of b0451e2 (truth table works)
 
     def testLaw(self, name, law, printed, last):
         law()
         self.unitize()
         if last != self:
+            self.unitize()
             # if name != 'Associative': print(f'{name}: {self.rep}')
-            # print(f'{name}: {self.rep}')
-            out = [name, deepcopy(self)]
+            out = f'{name}: {self.rep}'
             last = deepcopy(self)
             return True, last, out
+        self.unitize()
         return printed, last, None 
 
     def simplify(self):
         self.cluster()
-        self.unitize()
         outs = []
         last = deepcopy(self)
         printed = True
@@ -128,12 +118,16 @@ class Expression:
             printed, last, out = self.testLaw('Distributive', self.distribute, printed, last)
             if printed:
                 outs.append(out)
+<<<<<<< HEAD
                 continue 
         self.unitize()
         if len(outs)>0:
             outs[-1][1] = self
         else:
             outs.append(['', self])
+=======
+                continue  
+>>>>>>> parent of b0451e2 (truth table works)
         return outs      
 
     def flip(self):
@@ -145,7 +139,6 @@ class Expression:
                 elif term.term == VAR1:
                     self.terms.remove(term)
                     self.terms.append(VAR0)
-            term.unitize()
             if not isinstance(term, Var): term.flip()
 
     def inverse(self):
@@ -164,7 +157,6 @@ class Expression:
                         self.terms.remove(term)
                         self.terms.append(VAR1)
                         break
-            term.unitize()
             if not isinstance(term, Var): term.inverse()
 
     def involution(self):
@@ -173,7 +165,6 @@ class Expression:
                 if isinstance(term.term, Not):
                     self.terms.remove(term)
                     self.terms.append(term.term.term)
-            term.unitize()
             if not isinstance(term, Var): term.involution()
 
     def deMorgans(self):
@@ -186,7 +177,6 @@ class Expression:
                 elif isinstance(nterm, Sum):
                     self.terms.remove(term)
                     self.terms.append(Product(*[Not(i) for i in nterm.terms]))
-            term.unitize()
             if not isinstance(term, Var): term.deMorgans()
 
     def cluster(self):
@@ -207,27 +197,23 @@ class Expression:
                         tmp.remove(sterm)
                         for i in sterm.terms[::-1]: tmp.insert(ind, i)
                 term.terms = tmp.copy()
-            term.unitize()
             if not isinstance(term, Var): term.cluster()
 
     def unique(self):
         tmp = []
         for term in self.terms:
             if term not in tmp: tmp.append(term)
-            term.unitize()
             if not isinstance(term, Var): term.unique()
         self.terms = tmp
 
     def identity(self):
         for term in self.terms:
             if isinstance(term, Product):
-                if VAR1 in term.terms and len(term.terms) > 1:
+                if VAR1 in term.terms:
                     term.terms.remove(VAR1)
             elif isinstance(term, Sum):
-                if VAR0 in term.terms and len(term.terms) > 1:
+                if VAR0 in term.terms:
                     term.terms.remove(VAR0)
-                    
-            term.unitize()
             if not isinstance(term, Var): term.identity()
 
     def null(self):
@@ -240,7 +226,6 @@ class Expression:
                 if VAR1 in term.terms:
                     self.terms.remove(term)
                     self.terms.append(VAR1)
-            term.unitize()
             if not isinstance(term, Var): term.null()
 
     def absorb(self):
@@ -270,7 +255,6 @@ class Expression:
                                 self.terms.append(Sum(*notmatch, *diff, *extra))
                                 return
                             
-            term.unitize()
             if not isinstance(term, Var): term.absorb()
 
     def distribute(self):
@@ -287,7 +271,6 @@ class Expression:
                     fin = Sum(*[Product(*i) for i in prod])
                     self.terms.remove(term)
                     self.terms.append(fin) 
-            term.unitize()
             if not isinstance(term, Var): term.distribute()
 
 class Product(Expression):
@@ -334,8 +317,6 @@ class Var(Expression):
     def term(self):
         return self.terms[0]   
 
-
 VAR0 = Var('0')
 VAR1 = Var('1')
 
-# print(getLatex(Expression(Sum(Var('A'), Var('B')))))

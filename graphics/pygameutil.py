@@ -266,6 +266,7 @@ class Input:
                 self.textR = self.font.render(self.text[self.homeCursorPos:self.endCursorPos+1], True, self.fg)
                 # print(self.homeCursorPos, self.cursorPos, self.endCursorPos, len(self.text))
 
+<<<<<<< HEAD
 
 class ImageRect:
     def __init__(self, screen, image, x, y):
@@ -286,8 +287,11 @@ class ImageRect:
         display.blit(self.image, (self.x, self.y))
 
 
+=======
+    
+>>>>>>> parent of b0451e2 (truth table works)
 class Label:
-    def __init__(self, screen, text, rect, font, bg, fg, align='left', justify='centre', zlayer=0, addSelf=True, border=False, borderWidth=3, borderColour=(0,0,0)):
+    def __init__(self, screen, text, rect, font, bg, fg, align='left', justify='centre', zlayer=0, addSelf=True):
         self.display = screen
         self.text = text
         self.font = font
@@ -297,9 +301,6 @@ class Label:
         self.align = align
         self.justify = justify
         self.zlayer = zlayer
-        self.border = border 
-        self.borderWidth = borderWidth
-        self.borderColour = borderColour
         self.update()
         if isinstance(screen, (Screen, ScrollableSurface, TransformableSurface)) and addSelf:
             screen.addWidget(self)
@@ -313,12 +314,7 @@ class Label:
             display = self.display.contentSurface
         else:
             display = self.display
-        if self.border:
-            borderColour = self.borderColour
-        else:
-            borderColour = self.bg
-        pg.draw.rect(display, borderColour, self.rect)
-        pg.draw.rect(display, self.bg, (self.rect[0]+self.borderWidth, self.rect[1]+self.borderWidth, self.rect[2]-2*self.borderWidth, self.rect[3]-2*self.borderWidth))
+        pg.draw.rect(display, self.bg, self.rect)
         display.blit(self.label, self.label_rect)
 
     def update(self):
@@ -379,7 +375,11 @@ class Screen(pg.Surface):
             embed.clear()
 
         for widget in self.widgets:
+<<<<<<< HEAD
             if isinstance(widget, (Input, Button, ImageRect, Label)):
+=======
+            if isinstance(widget, (Input, DraggablePoint, DraggableRect, Button)):
+>>>>>>> parent of b0451e2 (truth table works)
                 widget.show()
 
         for embed in self.embed:
@@ -390,7 +390,7 @@ class ScrollableSurface(pg.Surface):
     def __init__(self, screen, x, y, DIM, bg, inactiveColour, activeColour, barWidth=5, padding=10):
         super().__init__(DIM)
         self.display = screen
-        self.showRect = (int(x), int(y), int(DIM[0]), int(DIM[1]))
+        self.showRect = (x, y, DIM[0], DIM[1])
         self.bg = bg
         self.colours = [inactiveColour, activeColour]
         self.zlayer = 0
@@ -426,7 +426,7 @@ class ScrollableSurface(pg.Surface):
 
             w = min(w, self.showRect[2]-(3*self.padding)-self.barw)
 
-            return (int(x), int(y), int(w), int(h))
+            return (x, y, w, h)
         except:
             return self.showRect
 
@@ -449,11 +449,6 @@ class ScrollableSurface(pg.Surface):
     def clear(self):
         self.fill(self.bg)
         self.contentSurface.fill(self.bg)
-
-    def removeAll(self):
-        for i in self.widgets:
-            self.display.widgets.remove(i)
-        self.widgets.clear()
 
     def update(self, event):
         keys = pg.key.get_pressed()
@@ -483,7 +478,7 @@ class ScrollableSurface(pg.Surface):
             if event.button == 1:
                 x, y = pg.mouse.get_pos()
                 x, y = x - self.showRect[0], y - self.showRect[1]
-                if self.bar.width < 7:
+                if self.bar.width < 3:
                     bx, by = self.bar.x, self.bar.y
                     dx = abs(x-bx)
                     if dx < self.barSnap and by<y<by+self.bar.height:
