@@ -6,6 +6,84 @@ from copy import deepcopy
 
 
 
+class BaseWidget:
+    def __init__(self, screen, x, y, DIM, bg, shape='rect', border=False, borderColour=None, borderWidth=3, zlayer=0, addSelf=True, hasEvent=False):
+        self.display = screen
+        self.bg = bg
+        self.shape = shape
+        self.border = border
+        self.borderWidth = borderWidth
+        self.borderColour = borderColour
+        self.zlayer = zlayer
+        self.addSelf = addSelf
+        if self.border:
+            self.borderRect = [x, y, DIM[0], DIM[1]]
+            self.rect = shrink(self.borderRect, self.borderWidth)
+        else:
+            self.rect = [x, y, DIM[0], DIM[1]]
+        if self.shape == 'circle':
+            self.centre = [self.rect[2]/2 + self.rect[0], self.rect[3]/2 + self.rect[1]]
+            self.r = self.rect[2]/2
+
+    def isOver(self, x, y):
+        if self.shape == 'rect':
+            if self.rect[0]<=x<=self.rect[0]+self.rect[2]:
+                if self.rect[1]<=y<=self.rect[1]+self.rect[3]:
+                    return True
+            return False
+        elif self.shape == 'circle':
+            if sqrt((self.centre[0] - x)**2 + (self.centre[1] - y)**2) <= self.r:
+                return True
+            return False
+
+    def show(self):
+        if self.border:
+            if self.shape == 'rect':
+                pg.draw.rect(self.display, self.borderColour, self.borderRect)
+                pg.draw.rect(self.display, self.bg, self.rect)
+            elif self.shape == 'circle':
+                pg.draw.circle(self.display, self.borderColour, self.centre, self.borderRect[2]/2)
+                pg.draw.circle(self.display, self.bg, self.centre, self.borderRect[2]/2 - self.borderWidth)
+        else:
+            if self.shape == 'rect':
+                pg.draw.rect(self.display, self.bg, self.borderRect)
+            elif self.shape == 'circle':
+                pg.draw.circle(self.display, self.bg, self.borderRect[:2], self.borderRect[2]/2)
+
+
+class NewLabel(BaseWidget):
+
+
+class NewButton(BaseWidget):
+    def __init__(self, screen, x, y, DIM, text, font, fg, inactiveColour, activeColour, shape, func, border=True, borderColour=None, borderWidth=3, zlayer=0, addSelf=True):
+        super().__init__(screen, x, y, DIM, inactiveColour, shape=shape, border=border, borderColour=borderColour, borderWidth=borderWidth, zlayer=zlayer, addSelf=addSelf, hasEvent=True)
+        self.colours = [inactiveColour, activeColour]
+        self.text = text
+        self.font = font
+        self.fg = fg
+        self.func = func
+        if type(screen) in addable:
+            screen.addWidget(self)
+
+    def update(self, event):
+        x, y = pg.mouse.get_pos()
+        if isinstance(self.display, (ScrollableSurface, TransformableSurface)):
+            x -= self.display.showRect[0]+self.display.offset[0]
+            y -= self.display.showRect[1]+self.display.offset[1]
+        over = self.isOver(x, y)
+        if event.type == pg.MOUSEMOTION:
+            if over:
+                self.bg = self.colours[1]
+            else:
+                self.bg = self.colours[0]
+        if event.type == pg.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                if over:
+                    self.func()
+        self.show()
+
+
+
 class Button:
     def __init__(self, screen, text, rect, font, inactiveColour, activeColour, fg, borderColour, func, borderWidth=3, actionButton=False, parent=None, zlayer=0):
         self.display = screen
@@ -226,6 +304,10 @@ class Label:
         if isinstance(screen, (Screen, ScrollableSurface, TransformableSurface)) and addSelf:
             screen.addWidget(self)
 
+    def updateText(self, new):
+        self.text = new
+        self.update()
+
     def show(self):
         if isinstance(self.display, (ScrollableSurface, TransformableSurface)):
             display = self.display.contentSurface
@@ -260,8 +342,6 @@ class Label:
             self.label_rect.bottom = self.rect[1] + self.rect[3]
         elif self.justify in ['centre','center']:
             self.label_rect.top = self.rect[1] + ((self.rect[3]/2) - (self.label_rect.height/2))//1
-
-        self.show()
 
 
 class Screen(pg.Surface):
@@ -299,10 +379,8 @@ class Screen(pg.Surface):
             embed.clear()
 
         for widget in self.widgets:
-            if isinstance(widget, (Input, Button, ImageRect)):
+            if isinstance(widget, (Input, Button, ImageRect, Label)):
                 widget.show()
-            elif isinstance(widget, (Label,)):
-                widget.update()
 
         for embed in self.embed:
             embed.show()
@@ -525,6 +603,9 @@ class TransformableSurface(pg.Surface):
 def doNothing():
 	pass
 
+def shrink(surf, amount):
+    return [surf[0]-amount, surf[1]-amount, surf[2]-amount*2, surf[3]-amount*2]
+
 def template():
     print(boilerplate)
 
@@ -532,6 +613,8 @@ def boilerPlate():
     print(boilerplate)
 
 count = 0
+
+addable = [Screen, ScrollableSurface, TransformableSurface]
 
 boilerplate = '''
 import pygame as pg
