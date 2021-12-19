@@ -2,6 +2,7 @@ import pygame as pg
 from pygame import gfxdraw as ppg #after the tk vs ttk convention
 from operator import itemgetter
 from math import sin, pi, sqrt
+from random import randint
 
 
 
@@ -234,9 +235,12 @@ class Label:
             borderColour = self.borderColour
         else:
             borderColour = self.bg
-        pg.draw.rect(display, borderColour, self.rect)
-        pg.draw.rect(display, self.bg, (self.rect[0]+self.borderWidth, self.rect[1]+self.borderWidth, self.rect[2]-2*self.borderWidth, self.rect[3]-2*self.borderWidth))
-        display.blit(self.label, self.label_rect)
+        try:
+            pg.draw.rect(display, borderColour, self.rect)
+            pg.draw.rect(display, self.bg, (self.rect[0]+self.borderWidth, self.rect[1]+self.borderWidth, self.rect[2]-2*self.borderWidth, self.rect[3]-2*self.borderWidth))
+            display.blit(self.label, self.label_rect)
+        except TypeError:
+            return
 
     def update(self):
         
@@ -262,7 +266,7 @@ class Label:
 
         self.show()
 
-      
+
 class DraggablePoint:
     def __init__(self, screen, x, y, r, inactiveColour, activeColour, zlayer=0):
         self.display = screen
@@ -370,52 +374,6 @@ class LayeredSurface(pg.Surface):
         if isinstance(screen, Screen):
             screen.addWidget(self)
             
-
-class Screen(pg.Surface):
-    def __init__(self, DIM):
-        super().__init__(DIM)
-        self.DIM = DIM
-        self.widgets = []
-        self.embed = []
-        self.actionButton = None
-        
-    def addWidget(self, widget):
-        self.widgets.append(widget)
-        self.widgets = sorted(self.widgets, key=lambda x: x.zlayer)
-
-    def addEmbed(self, embed):
-        self.embed.append(embed)
-        self.embed = sorted(self.embed, key=lambda x: x.zlayer)
-
-    def clear(self):
-        self.widgets.clear()
-
-    def event_update(self, event):
-        for embed in self.embed:
-            embed.update(event)
-        for widget in self.widgets:
-            if isinstance(widget, (Input, Button, DraggablePoint, DraggableRect)):
-                widget.update(event)
-        if event.type == pg.KEYDOWN:
-            if event.key == pg.K_RETURN:
-                if self.actionButton != None:
-                    self.actionButton.func()
-    
-    def update(self):
-        for embed in self.embed:
-            embed.clear()
-
-        for widget in self.widgets:
-            if isinstance(widget, (Input, DraggablePoint, DraggableRect, Button, ImageRect)):
-                widget.show()
-            elif isinstance(widget, (Label,)):
-                widget.update()
-            elif isinstance(widget, (LayeredSurface,)):
-                self.blit(widget, (0,0))
-
-        for embed in self.embed:
-            embed.show()
-
 
 class ScrollableSurface(pg.Surface):
     def __init__(self, screen, x, y, DIM, bg, inactiveColour, activeColour, barWidth=5, padding=10):
@@ -542,6 +500,54 @@ class ScrollableSurface(pg.Surface):
         self.bar = pg.draw.rect(self, self.colours[self.barGrab], (barx, self.barStart, self.barw, self.barHeight))
         self.display.blit(self, (self.showRect[0], self.showRect[1]))
 
+
+class Screen(pg.Surface):
+    def __init__(self, DIM):
+        super().__init__(DIM)
+        self.DIM = DIM
+        self.widgets = []
+        self.embed = []
+        self.actionButton = None
+        
+    def addWidget(self, widget):
+        self.widgets.append(widget)
+        self.widgets = sorted(self.widgets, key=lambda x: x.zlayer)
+
+    def addEmbed(self, embed):
+        self.embed.append(embed)
+        self.embed = sorted(self.embed, key=lambda x: x.zlayer)
+
+    def clear(self):
+        self.widgets.clear()
+
+    def event_update(self, event):
+        for embed in self.embed:
+            embed.update(event)
+        for widget in self.widgets:
+            if isinstance(widget, (Input, Button, DraggablePoint, DraggableRect)):
+                widget.update(event)
+        if event.type == pg.KEYDOWN:
+            if event.key == pg.K_RETURN:
+                if self.actionButton != None:
+                    self.actionButton.func()
+    
+    def update(self):
+        for embed in self.embed:
+            embed.clear()
+
+        for widget in self.widgets:
+            if isinstance(widget, (Input, DraggablePoint, DraggableRect, Button, ImageRect)):
+                widget.show()
+            elif isinstance(widget, (Label,)):
+                widget.update()
+            elif isinstance(widget, (LayeredSurface,)):
+                self.blit(widget, (0,0))
+
+        for embed in self.embed:
+            embed.show()
+
+
+
 def doNothing():
 	pass
 
@@ -552,14 +558,9 @@ def boilerPlate():
     print(boilerplate)
 
 
-
 boilerplate = '''
 import pygame as pg
 import pygameutil as pgu
-       
-
-def mainScreenSetup():
-    mainScreen.fill((0, 0, 0))
 
 pg.init()
 pg.font.init()

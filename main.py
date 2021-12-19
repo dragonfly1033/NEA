@@ -3,6 +3,7 @@ sys.path.insert(0, 'parsing')
 import pygame as pg
 import requests
 from graphics import pygameutil as pgu
+from graphics import widget as wid
 from parsing import parse
 from parsing.tokens import *
 
@@ -50,8 +51,12 @@ def tableScreenSetup():
 
 def logicScreenSetup():
     logicScreen.fill(BACKGROUNDC)
-    homeButton = pgu.Button(logicScreen, 'Home', (20, 20, 125, 70), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
-    widgetBox = pgu.ScrollableSurface(logicScreen, 0, 0, (250, DIM[1]), DBLUE, BORDERC, TEXTC, padding=8)
+    ribbonBorder = pg.draw.rect(logicScreen, BORDERC, (0, 0, DIM[0], 80))
+    ribbon = pg.draw.rect(logicScreen, LBLUE, (0, 0, DIM[0], 80-3))
+    homeButton = pgu.Button(logicScreen, 'Home', (15, 15, 125, 50), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
+    widgetBoxBorder = pg.draw.rect(logicScreen, BORDERC, (0, 80, 250, DIM[1]))
+    widgetBox = pgu.ScrollableSurface(logicScreen, 0, 80, (250-3, DIM[1]), BACKGROUNDC, BORDERC, TEXTC, padding=8)
+    sandboxWindow = wid.Grid(logicScreen, 250, 80, (DIM[0]-250, DIM[1]-80), BACKGROUNDC, TEXTC)
 
 def simplifierScreenSetup(steps=[]):
     def buttonFunc(s):
@@ -77,8 +82,10 @@ def simplifierScreenSetup(steps=[]):
         createPNG(step[1])
         tmp = pg.image.load(f'tmpimages\\tmp.png')
         tmp = tmp.convert()
-        tmpI = pgu.ImageRect(stepsBox, tmp, 0, h)
-        h += tmp.get_height() + stepsBox.padding/2
+        tmp.set_colorkey((255,255,255))
+        tmpl = pgu.Label(stepsBox, f'{step[0]}: ', (0, h, stepsBox.showRect[2], 50), medFont, BACKGROUNDC, TEXTC)
+        tmpI = pgu.ImageRect(stepsBox, tmp, 0, h + 50)
+        h += tmp.get_height() + stepsBox.padding/2 + 50
 
 def mainScreenSetup():
     mainScreen.fill(BACKGROUNDC)
@@ -179,7 +186,7 @@ loginScreenSetup()
 curScreen = mainScreen
 run = True
 while run:
-    curScreen.fill(BACKGROUNDC)
+    # curScreen.fill(BACKGROUNDC)
     for event in pg.event.get():
         if event.type == pg.QUIT:
             run = False
