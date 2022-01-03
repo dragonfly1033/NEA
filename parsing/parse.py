@@ -1,6 +1,5 @@
-import sys
-import binaryTree as bt
-from tokens import *
+import parsing.binaryTree as bt
+from parsing.tokens import *
 import re
 from collections import OrderedDict
 

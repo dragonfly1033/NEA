@@ -1,8 +1,3 @@
-import sys
-import pathlib
-path = pathlib.Path().resolve()
-sys.path.append(f'{path}\\graphics')
-sys.path.append(f'{path}\\parsing')
 from graphics import pygameutil as pgu
 import pygame as pg
 import random as r

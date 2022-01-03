@@ -1,5 +1,3 @@
-import sys
-sys.path.insert(0, 'parsing')
 import pygame as pg
 import requests
 from graphics import pygameutil as pgu
