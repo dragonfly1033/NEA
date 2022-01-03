@@ -47,7 +47,7 @@ class Line:
 
 
 class Grid:
-    def __init__(self, screen, x, y, DIM, bg, lineC):
+    def __init__(self, screen, x, y, DIM, bg, lineC, widgetC, nodeC, onC):
         self.display = screen
         self.rect = [x, y, DIM[0], DIM[1]]
         self.minDim = min(self.rect[2:])
@@ -68,6 +68,9 @@ class Grid:
         self.minCellW = self.minDim/(self.minCellDim*self.maxZoom)
         self.selected = None
         self.pathLines = []
+        self.widgetC = widgetC
+        self.nodeC = nodeC
+        self.onC = onC
 
         self.scale = 1
         self.updateScale()
@@ -315,7 +318,7 @@ class Element:
             i.update(event)   
 
     def makeImage(self):
-        self.imageSurface.fill(self.cell.grid.lineC)
+        self.imageSurface.fill(self.cell.grid.widgetC)
         l = pgu.Label(self, self.text, (0,0,self.imDim[0],self.imDim[1]), font, (255,0,0), self.cell.grid.bg, align='centre', addSelf=False)
         self.imageSurface.blit(l.label, l.label_rect)        
 
@@ -437,7 +440,7 @@ class Node:
                             self.element.cell.grid.selected = None
 
     def show(self):
-        colour = (255,0,0) if not self.active or self.colour == None else self.colour
+        colour = self.element.cell.grid.nodeC if not self.active or self.colour == None else self.colour
         if type(self.center[0]) != int: 
             pg.draw.circle(self.element.cell.grid.contentSurface, colour, self.center, self.r)
             # l = pgu.Label(self, f'{self.val}', (self.center[0]-self.r, self.center[1]-self.r, self.r*2, self.r*2), smallFont, colour, self.element.cell.grid.lineC, align='center', addSelf=False)
@@ -482,7 +485,7 @@ class SwitchElement(Element):
         if event.type == pg.MOUSEBUTTONDOWN:
             if self.isOver() and event.button == 1:
                 self.outputs[0].setV(int(not self.outputs[0].val))
-                c = self.cell.grid.lineC if not self.outputs[0].val else (0,255,255)
+                c = self.cell.grid.lineC if not self.outputs[0].val else self.cell.grid.onC
                 self.imageSurface.fill(c)
                 l = pgu.Label(self, self.text, (0,0,self.imDim[0],self.imDim[1]), font, c, self.cell.grid.bg, align='centre', addSelf=False)
                 self.imageSurface.blit(l.label, l.label_rect)
@@ -495,7 +498,7 @@ class BulbElement(Element):
         super().__init__(cell, 'Bulb', 1, 0)
 
     def updateOutputs(self):
-        c = self.cell.grid.lineC if not self.inputs[0].val else (0,255,255)
+        c = self.cell.grid.lineC if not self.inputs[0].val else self.cell.grid.onC
         self.imageSurface.fill(c)
         l = pgu.Label(self, self.text, (0,0,self.imDim[0],self.imDim[1]), font, c, self.cell.grid.bg, align='centre', addSelf=False)
         self.imageSurface.blit(l.label, l.label_rect)

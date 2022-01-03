@@ -59,7 +59,7 @@ def logicScreenSetup():
     homeButton = pgu.Button(logicScreen, 'Home', (15, 15, 125, 50), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
     widgetBoxBorder = pg.draw.rect(logicScreen, BORDERC, (0, 80, 250, DIM[1]))
     widgetBox = pgu.ScrollableSurface(logicScreen, 0, 80, (250-3, DIM[1]-80), BACKGROUNDC, BORDERC, TEXTC, padding=8)
-    sandboxWindow = wid.Grid(logicScreen, 250, 80, (DIM[0]-250, DIM[1]-80), BACKGROUNDC, TEXTC)
+    sandboxWindow = wid.Grid(logicScreen, 250, 80, (DIM[0]-250, DIM[1]-80), BACKGROUNDC, TEXTC, TEXTC, BORDERC, LBLUE)
     switchButton = pgu.Button(widgetBox, 'Switch', (0, (120+10)*0, 210, 120), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeSelectedWidget('switch'))
     bulbButton = pgu.Button(widgetBox, 'Bulb',     (0, (120+10)*1, 210, 120), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeSelectedWidget('bulb'))
     andButton = pgu.Button(widgetBox, 'And',       (0, (120+10)*2, 210, 120), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeSelectedWidget('and'))
