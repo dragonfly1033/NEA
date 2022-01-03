@@ -383,7 +383,7 @@ class ScrollableSurface(pg.Surface):
         self.bg = bg
         self.colours = [inactiveColour, activeColour]
         self.zlayer = 0
-        self.scrollv = 0.04
+        self.scrollv = 0.18
         self.widgets = []
         self.contentSurface = pg.Surface(DIM)
         self.padding = padding

@@ -34,25 +34,65 @@ def tokenize(s):
     phrased = OrderedDict(sorted(phrased.items(), key=lambda x: x[1][1], reverse=True))
     return OrderedDict(zip(phrased.keys(), [i[0] for i in phrased.values()]))
 
-def isUnit(s):
-    s = unitize(s)
-    if len(s) == 1:
-        return True
-    if re.match(r'^\{\d+\}$', s):
-        return True
+def unitize(expr):
+    def removeExtraBrackets(s):
+        pairs = []
+        openB = []
+        new = ''
+        toRemove = []
+        for i, v in enumerate(s):
+            if v == '(':
+                openB.append(i)
+            if v == ')':
+                pairs.append([openB.pop(), i])
+
+        for p in pairs:
+            if p[0] == 0 and p[1] == len(s)-1:
+                toRemove.append(p[0])
+                toRemove.append(p[1])
+                continue
+
+            between = s[p[0]+1:p[1]]   
+            if '+' in between or '*' in between or '¬' in between:
+                continue
+            toRemove.append(p[0])
+            toRemove.append(p[1])
+
+        for i, v in enumerate(s):
+            if i not in toRemove:
+                new += v
+
+        return new
+
+    new = removeExtraBrackets(expr)
+    while expr != new:
+        expr = new
+        new = removeExtraBrackets(expr)
+    
+    return new
+
+
+def hasRedundantBrackets(s):
+    chars = []
+    for i, ch in enumerate(s):
+        if ch == ')':
+            top = chars.pop()
+            operator = False
+            while top != '(':
+                if top == '+' or top == '¬' or top == '*':
+                    operator = True
+                top = chars.pop()
+            if not operator:
+                return False
+        else:
+            chars.append(ch)
     return False
 
-def unitize(s):
-    n = s
-    if s[0] == '(' and s[-1] == ')':
-        n = s[1:-1]
-    for i in n:
-        if i in ['(', ')']:
-            if i == ')':
-                return s
-            else:
-                break
-    return n
+def isUnit(s):
+    if len(s) == 1:
+        return True
+    else:
+        return False
 
 def findMinimumPriority(s):
     minn = (999,999)
@@ -141,3 +181,6 @@ def parse(s):
 
 # for i in d:
 #     print(i[1].getLatex())
+
+# s = '((0+0)*(¬(0)+¬(0)))'
+# t = parse(s)

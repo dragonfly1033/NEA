@@ -81,7 +81,7 @@ class Expression:
     def simplify(self):
         self.cluster()
         self.unitize()
-        outs = []
+        outs = [['Original', deepcopy(self)]]
         last = deepcopy(self)
         printed = True
         while printed:
@@ -127,6 +127,7 @@ class Expression:
             if printed:
                 outs.append(out)
                 continue 
+            outs.append(['', deepcopy(self)])
         self.unitize()
         outs[-1][1] = self
         return outs      

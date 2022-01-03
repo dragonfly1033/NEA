@@ -8,6 +8,43 @@ from parsing import parse
 from parsing.tokens import *
 
 
+class Line:
+    def __init__(self, node1, node2, c, bc):
+        self.node1 = node1
+        self.node2 = node2
+        self.res = 20
+        self.bc = bc
+        self.c = c
+
+    def calcPoints(self):
+        self.p1 = self.node1.center
+        self.p4 = self.node2.center
+        self.p2 = (0.5*(self.p1[0]+self.p4[0]), self.p1[1])
+        self.p3 = (0.5*(self.p1[0]+self.p4[0]), self.p4[1])
+        self.ps = []
+        t = 0
+        for i in range(self.res+1):
+            q0 = list(map(lambda x: ((1-t)**3)*x, self.p1))
+            q1 = list(map(lambda x: ((1-t)**2)*t*3*x, self.p2))
+            q2 = list(map(lambda x: ((1-t)**1)*t*t*3*x, self.p3))
+            q3 = list(map(lambda x: t*t*t*x, self.p4))
+            nx = q0[0] + q1[0] + q2[0] + q3[0]
+            ny = q0[1] + q1[1] + q2[1] + q3[1]
+            self.ps.append((nx, ny))
+
+            t += 1/self.res
+
+    def show(self):
+        self.calcPoints()
+        c = self.c if self.node2.val == 1 else self.bc
+        pg.draw.lines(self.node1.element.cell.grid.contentSurface, self.bc, False, self.ps, 5)
+        pg.draw.lines(self.node1.element.cell.grid.contentSurface, c, False, self.ps, 3)
+        # x, y = pg.mouse.get_pos()
+        # x, y = x-self.node1.element.cell.grid.rect[0], y-self.node1.element.cell.grid.rect[1]
+        # x, y = x-self.node1.element.cell.grid.origin[0], y-self.node1.element.cell.grid.origin[1]
+        # x, y = round(x), round(y)
+        # print(self.ps, (x, y))
+
 
 class Grid:
     def __init__(self, screen, x, y, DIM, bg, lineC):
@@ -30,6 +67,7 @@ class Grid:
         self.display.addEmbed(self)
         self.minCellW = self.minDim/(self.minCellDim*self.maxZoom)
         self.selected = None
+        self.pathLines = []
 
         self.scale = 1
         self.updateScale()
@@ -40,6 +78,12 @@ class Grid:
             self.cells.append(row)
         self.scale = self.maxZoom
         self.updateScale()
+
+    def clearCells(self):
+        for row in self.cells:
+            for c in row:
+                c.element = None
+                c.backreference = c
 
     def updateScale(self):
         nw = round(self.rect[2] * self.scale)
@@ -94,7 +138,6 @@ class Grid:
                         self.scale = oldscale
                         self.origin = oldorigin.copy()
 
-
             if event.type == pg.MOUSEBUTTONUP:
                 if event.button == 1:
                     self.isDragging = False
@@ -114,33 +157,24 @@ class Grid:
                         ):
                         self.origin = oldorigin.copy()
             if event.type == pg.KEYDOWN:
-                oldscale = self.scale
-                oldorigin = self.origin.copy()
-                if event.key == pg.K_p:
-                    self.scale *= 1.05
-                if event.key == pg.K_m:
-                    self.scale /= 1.05
-                self.scale = min(max(self.scale, 1), self.maxZoom)
-                if oldscale != self.scale:
-                    x, y = pg.mouse.get_pos()
-                    dz = self.scale/oldscale
-                    self.origin[0] = dz*(self.origin[0] - (x - self.rect[0])) + (x - self.rect[0])
-                    self.origin[1] = dz*(self.origin[1] - (y - self.rect[1])) + (y - self.rect[1])
-                    self.updateScale()
-                    cw, ch = self.contentSurface.get_width(), self.contentSurface.get_height()
-                    if not (self.origin[0] <= 0 and self.origin[1] <= 0 and 
-                        self.origin[0]+cw >= self.rect[0]+self.rect[2] and
-                        self.origin[1]+ch >= self.rect[1]+self.rect[3]
-                        ):
-                        self.scale = oldscale
-                        self.origin = oldorigin.copy()
-        c = self.getOnCell()
-        if c != None: c.update(event)
+                pass
+            c = self.getOnCell()
+            if c != None: c.update(event)
 
     def show(self):
+        for i in self.pathLines:
+            i.show()
         for row in self.cells:
             for c in row:
                 c.show()
+        if selectedWidget != None:
+            x, y = pg.mouse.get_pos()
+            x, y = x-self.rect[0]-self.origin[0],y-self.rect[1]-self.origin[1]
+            icon = pg.Surface((50,50))
+            icon.fill((150,150,150))
+            l = pgu.Label(self, selectedWidget, (0,0, 50,50), smallFont, (0,255,255), (0,0,0), addSelf=False, align='center')
+            icon.blit(l.label, l.label_rect)
+            self.contentSurface.blit(icon, (x+10, y+10))
         self.showSurface.blit(self.contentSurface, self.origin)
         self.display.blit(self.showSurface, self.rect[:2])
 
@@ -153,8 +187,12 @@ class Cell:
         self.w = 1
         self.c = self.grid.lineC#(r.randint(0,255),r.randint(0,255),r.randint(0,255))
         self.element = None
-        self.backreference = None
+        self.backreference = self
+        self.last_pos = None
 
+    def __repr__(self):
+        return f'({self.x},{self.y})'
+    
     def setBackreference(self, other, el):
         self.backreference = other if other != None else self
         self.element = el
@@ -162,33 +200,60 @@ class Cell:
     def update(self, event):
         if event.type == pg.KEYDOWN:
             if event.key == pg.K_q:
-                s = f'({self.x}, {self.y}), {None if self.element == None else self.element.IO}'
-                print(s)
-            if event.key == pg.K_d:
+                print(self, self.backreference, self.element)
+            if event.key == pg.K_BACKSPACE:
                 self.element.clearBackreferences()
                 self.element = None
-            if self.backreference == None:
-                if event.key == pg.K_a:
-                    self.element = AndElement(self)
-                if event.key == pg.K_o:
-                    self.element = OrElement(self)
-                if event.key == pg.K_n:
-                    self.element = NotElement(self)
-                if event.key == pg.K_x:
-                    self.element = XorElement(self)
-                if event.key == pg.K_s:
-                    self.element = SwitchElement(self)
-                if event.key == pg.K_b:
-                    self.element = BulbElement(self)
+        if event.type == pg.MOUSEBUTTONDOWN:
+            if event.button == 1:
+                self.last_pos = pg.mouse.get_pos()
+        if event.type == pg.MOUSEBUTTONUP:
+            if event.button == 1:
+                nx, ny = pg.mouse.get_pos()
+                if self.last_pos != None:    
+                    dx, dy = nx-self.last_pos[0], ny-self.last_pos[1]
+                else:
+                    dx = dy = 0
+                if dx < self.grid.cellW/2 and dy < self.grid.cellW/2:
+                    if self.element == None:
+                        if selectedWidget == 'switch':
+                            try:
+                                self.element = SwitchElement(self)
+                            except OverflowError:
+                                self.element = None
+                        elif selectedWidget == 'bulb':
+                            try:
+                                self.element = BulbElement(self)
+                            except OverflowError:
+                                self.element = None
+                        elif selectedWidget == 'and':
+                            try:
+                                self.element = AndElement(self)
+                            except OverflowError:
+                                self.element = None
+                        elif selectedWidget == 'or':
+                            try:
+                                self.element = OrElement(self)
+                            except OverflowError:
+                                self.element = None
+                        elif selectedWidget == 'not':
+                            try:
+                                self.element = NotElement(self)
+                            except OverflowError:
+                                self.element = None
+                        elif selectedWidget == 'xor':
+                            try:
+                                self.element = XorElement(self)
+                            except OverflowError:
+                                self.element = None
         if self.element != None: self.element.update(event)          
 
     def show(self):
         x = self.grid.cellW * self.x
         y = self.grid.cellW * self.y
         w = h = self.grid.cellW
-        # pg.draw.rect(self.grid.contentSurface, self.c, (x, y, w, h), 1)
         pg.draw.circle(self.grid.contentSurface, self.grid.lineC, (x, y), 1)
-        if self.element != None: self.element.show()
+        if self.element != None and self.backreference == self: self.element.show()
 
 
 class Element:
@@ -204,9 +269,7 @@ class Element:
         scale = 100
         self.imDim = [self.cellw*scale, self.cellh*scale]
         self.imageSurface = pg.Surface(self.imDim)
-        self.imageSurface.fill(self.cell.grid.lineC)
-        l = pgu.Label(self, self.text, (0,0,self.imDim[0],self.imDim[1]), font, (255,0,0), self.cell.grid.bg, align='centre', addSelf=False)
-        self.imageSurface.blit(l.label, l.label_rect)
+        self.makeImage()
         self.colour = (255,0,0)
         self.inputs = []
         self.outputs = []
@@ -216,32 +279,45 @@ class Element:
         for i in range(self.noOfoutputs): 
             self.outputs.append(Node(self, 'output', i))  
 
+        self.intersectCells = []
         for y in range(self.cellh):
             c1 = self.cell.grid.cells[self.cell.y+y][self.cell.x]   
             c2 = self.cell.grid.cells[self.cell.y+y][self.cell.x+1]
-            if y > 0: c1.setBackreference(self.cell, self)
-            c2.setBackreference(self.cell, self)
+            self.intersectCells.append(c1)
+            self.intersectCells.append(c2)
+
+        isEmpty = [i.element == None for i in self.intersectCells]
+        if all(isEmpty):
+            for c in self.intersectCells:
+                c.setBackreference(self.cell, self)
+        else:
+            raise OverflowError
 
         self.updateOutputs()
 
     def clearBackreferences(self):
-        for y in range(self.cellh):
-            c1 = self.cell.grid.cells[self.cell.y+y][self.cell.x]   
-            c2 = self.cell.grid.cells[self.cell.y+y][self.cell.x+1]
-            if y > 0: c1.setBackreference(None, None)
-            c2.setBackreference(None, None)     
-
-    def convert_pos(self, val):
-        return ((val/self.scale)-((1-self.scale)/(2*self.scale)))/self.cellh
+        for c in self.intersectCells:
+            c.setBackreference(None, None)    
 
     def updateOutputs(self):
-        pass
+        rep = self.expr.rep
+        for i in range(len(self.inputs)):
+            rep = rep.replace(alph[i], str(self.inputs[i].val))
+        exp = parse.parse(rep)
+        ans = exp.simplify()
+        ans = ans[-1][1].terms[0].rep
+        self.outputs[0].setV(int(ans))
 
     def update(self, event):
         for i in self.inputs:
             i.update(event)
         for i in self.outputs: 
-            i.update(event)           
+            i.update(event)   
+
+    def makeImage(self):
+        self.imageSurface.fill(self.cell.grid.lineC)
+        l = pgu.Label(self, self.text, (0,0,self.imDim[0],self.imDim[1]), font, (255,0,0), self.cell.grid.bg, align='centre', addSelf=False)
+        self.imageSurface.blit(l.label, l.label_rect)        
 
     @property
     def IO(self):
@@ -284,13 +360,12 @@ class Node:
     def __init__(self, element, typee, number):
         self.element = element
         self.type = typee
-        self.center = None
-        self.r = 1
         self.colour = (255,0,0) if self.type == 'input' else r.choice(COLOURS)#(r.randint(0,255),r.randint(0,255),r.randint(0,255))
         self.active = 0
         self.v = 0
         self.number = number
         self.backreference = self
+        self.line = None
 
     def setBackreference(self, other):
         self.backreference = other
@@ -298,8 +373,8 @@ class Node:
     def setV(self, v):
         self.v = v
         if self.type == 'input':
-            print(not self.val)
             self.element.updateOutputs()
+
 
     @property
     def val(self):
@@ -311,6 +386,18 @@ class Node:
             ret = self.v
         return ret
 
+    @property
+    def r(self):
+        return 0.8 * self.element.cell.grid.scale
+
+    @property
+    def center(self):
+        if self.type == 'input':    
+            ret = (self.element.drawx + self.element.drawxoff + self.r, self.element.drawy + self.element.cell.grid.cellW*0.5 + self.element.cell.grid.cellW*self.number)
+        elif self.type == 'output':    
+            ret = (self.element.drawx + self.element.cell.grid.cellW*self.element.cellw - self.element.drawxoff - self.r, self.element.drawy + self.element.cell.grid.cellW*0.5 + self.element.cell.grid.cellW*self.number)
+        return ret
+
     def isOver(self):
         x, y = pg.mouse.get_pos()
         x, y = x-self.element.cell.grid.rect[0]-self.element.cell.grid.origin[0], y-self.element.cell.grid.rect[1]-self.element.cell.grid.origin[1]
@@ -320,7 +407,6 @@ class Node:
         return False
 
     def update(self, event):
-        global CONNECTIONS
         if event.type == pg.MOUSEBUTTONDOWN:
             if event.button == 1:
                 if self.isOver():
@@ -346,48 +432,37 @@ class Node:
                             self.active = int(not self.active)
                             self.colour = self.element.cell.grid.selected.colour
                             self.setBackreference(self.element.cell.grid.selected)
+                            line = Line(self.element.cell.grid.selected, self, self.colour, self.element.cell.grid.lineC)
+                            self.element.cell.grid.pathLines.append(line)
                             self.element.cell.grid.selected = None
 
     def show(self):
-        if self.type == 'input':    
-            self.center = (self.element.drawx + self.element.drawxoff + self.r, self.element.drawy + self.element.cell.grid.cellW*0.5 + self.element.cell.grid.cellW*self.number)
-        elif self.type == 'output':    
-            self.center = (self.element.drawx + self.element.cell.grid.cellW*self.element.cellw - self.element.drawxoff - self.r, self.element.drawy + self.element.cell.grid.cellW*0.5 + self.element.cell.grid.cellW*self.number)
         colour = (255,0,0) if not self.active or self.colour == None else self.colour
-        self.r = 0.8 * self.element.cell.grid.scale
         if type(self.center[0]) != int: 
             pg.draw.circle(self.element.cell.grid.contentSurface, colour, self.center, self.r)
-            l = pgu.Label(self, f'{self.val}', (self.center[0]-self.r, self.center[1]-self.r, self.r*2, self.r*2), smallfont, colour, self.element.cell.grid.lineC, align='center', addSelf=False)
-            self.element.cell.grid.contentSurface.blit(l.label, l.label_rect)
+            # l = pgu.Label(self, f'{self.val}', (self.center[0]-self.r, self.center[1]-self.r, self.r*2, self.r*2), smallFont, colour, self.element.cell.grid.lineC, align='center', addSelf=False)
+            # self.element.cell.grid.contentSurface.blit(l.label, l.label_rect)
 
 
 class NotElement(Element):
     def __init__(self, cell):
+        self.expr = Expression(Not(Var('A')))
         super().__init__(cell, 'Not', 1, 1)
-
-    def updateOutputs(self):
-        self.outputs[0].setV(int(not self.inputs[0].val))
 
 class AndElement(Element):
     def __init__(self, cell):
+        self.expr = Expression(Product(Var('A'), Var('B')))
         super().__init__(cell, 'And', 2, 1)
-
-    def updateOutputs(self):
-        self.outputs[0].setV(int(self.inputs[0].val and self.inputs[1].val))
         
 class OrElement(Element):
     def __init__(self, cell):
+        self.expr = Expression(Sum(Var('A'), Var('B')))
         super().__init__(cell, 'Or', 2, 1)
-
-    def updateOutputs(self):
-        self.outputs[0].setV(int(self.inputs[0].val or self.inputs[1].val))
 
 class XorElement(Element):
     def __init__(self, cell):
+        self.expr = Expression(Product(Sum(Var('A'), Var('B')), Sum(Not(Var('A')), Not(Var('B')))))
         super().__init__(cell, 'Xor', 2, 1)
-
-    def updateOutputs(self):
-        self.outputs[0].setV(int(self.inputs[0].val ^ self.inputs[1].val))
         
 class SwitchElement(Element):
     def __init__(self, cell):
@@ -405,8 +480,12 @@ class SwitchElement(Element):
     def update(self, event):
         super().update(event)
         if event.type == pg.MOUSEBUTTONDOWN:
-            if self.isOver():
+            if self.isOver() and event.button == 1:
                 self.outputs[0].setV(int(not self.outputs[0].val))
+                c = self.cell.grid.lineC if not self.outputs[0].val else (0,255,255)
+                self.imageSurface.fill(c)
+                l = pgu.Label(self, self.text, (0,0,self.imDim[0],self.imDim[1]), font, c, self.cell.grid.bg, align='centre', addSelf=False)
+                self.imageSurface.blit(l.label, l.label_rect)
 
     def updateOutputs(self):
         pass
@@ -416,12 +495,18 @@ class BulbElement(Element):
         super().__init__(cell, 'Bulb', 1, 0)
 
     def updateOutputs(self):
-        pass
+        c = self.cell.grid.lineC if not self.inputs[0].val else (0,255,255)
+        self.imageSurface.fill(c)
+        l = pgu.Label(self, self.text, (0,0,self.imDim[0],self.imDim[1]), font, c, self.cell.grid.bg, align='centre', addSelf=False)
+        self.imageSurface.blit(l.label, l.label_rect)
         
 
 pg.font.init()
 font = pg.font.SysFont('Calibri Bold', 64)
-smallfont = pg.font.SysFont('Calibri', 12)
+smallFont = pg.font.SysFont('Calibri', 12)
+vsmallFont = pg.font.SysFont('Calibri', 6)
+
+alph = [chr(i) for i in range(65, 91)]
 
 from colorsys import hls_to_rgb
 COLOURS = []
@@ -432,3 +517,5 @@ for i in range(100):
     s = r.randint(30, 100)/100
     c = [x*255 for x in hls_to_rgb(h, s, l)]
     COLOURS.append(c)
+
+selectedWidget = None
