@@ -20,18 +20,7 @@ def changeScreen(new):
         curScreen = logicScreen
     elif new == 'table':
         curScreen = tableScreen
-    elif new == 'login':
-        curScreen = loginScreen
 
-def loginScreenSetup():
-    buttonW = 600
-    buttonH = 100
-    gap = 30
-    start = (DIM[1]-buttonH)/2 - 100
-    loginScreen.fill(BACKGROUNDC)
-    heading = pgu.Label(loginScreen, 'Log in', (0, 0, DIM[0], DIM[1]/3), subtitleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
-    homeButton = pgu.Button(loginScreen, 'Home', (20, 20, 125, 70), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
- 
 def tableScreenSetup():
     def buttonFunc(s, tb):
         val = validateExpression(s)
@@ -101,14 +90,12 @@ def mainScreenSetup():
     mainScreen.fill(BACKGROUNDC)
     buttonW = 600
     buttonH = 100
-    gap = 30
-    start = (DIM[1]-buttonH)/2 - buttonH
+    gap = 50
+    start = (DIM[1]-buttonH)/2 - buttonH/2
     heading = pgu.Label(mainScreen, 'b L o g i c.', (0, 0, DIM[0], DIM[1]/3), titleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
     simplifierButton = pgu.Button(mainScreen, 'Simplifier', ((DIM[0]-buttonW)/2, start, buttonW, buttonH), vLargeFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('simplifier'))
     logicSimButton = pgu.Button(mainScreen, 'Logic Simulator', ((DIM[0]-buttonW)/2, start + (buttonH + gap), buttonW, buttonH), vLargeFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('logic'))
     tableButton = pgu.Button(mainScreen, 'Truth Table', ((DIM[0]-buttonW)/2, start + (buttonH + gap)*2, buttonW, buttonH), vLargeFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('table'))
-    loginButton = pgu.Button(mainScreen, 'Log In', ((DIM[0]-buttonW)/2, start + (buttonH + gap)*3, buttonW, buttonH), vLargeFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('login'))
-
 
 def createPNG(step):
     latex = step.getLatex()
@@ -189,9 +176,6 @@ logicScreen = pgu.Screen(DIM)
 logicScreenSetup()
 tableScreen = pgu.Screen(DIM)
 tableScreenSetup()
-loginScreen = pgu.Screen(DIM)
-loginScreenSetup()
-
 
 curScreen = mainScreen
 run = True

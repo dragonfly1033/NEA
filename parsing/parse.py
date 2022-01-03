@@ -1,5 +1,4 @@
 import sys
-sys.path.insert(0, './')
 import binaryTree as bt
 from tokens import *
 import re

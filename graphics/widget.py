@@ -1,6 +1,8 @@
 import sys
-sys.path.append('C:\\Users\\shrey\\python\\NEA\\graphics')
-sys.path.append('C:\\Users\\shrey\\python\\NEA\\parsing')
+import pathlib
+path = pathlib.Path().resolve()
+sys.path.append(f'{path}\\graphics')
+sys.path.append(f'{path}\\parsing')
 from graphics import pygameutil as pgu
 import pygame as pg
 import random as r
