@@ -3,6 +3,7 @@ import pygame as pg
 import random as r
 from parsing import parse
 from parsing.tokens import *
+import math
 
 
 class Line:
@@ -12,6 +13,33 @@ class Line:
         self.res = 20
         self.bc = bc
         self.c = c
+        self.calcPoints()
+
+    def isOver(self):
+        lineOver = []
+        x, y = pg.mouse.get_pos()
+        x, y = x-self.node1.element.cell.grid.rect[0]-self.node1.element.cell.grid.origin[0], y-self.node1.element.cell.grid.rect[1]-self.node1.element.cell.grid.origin[1]
+        for l in range(len(self.ps)-1):
+            p1 = self.ps[l]
+            p2 = self.ps[l+1]
+            d1 = math.sqrt((p1[0]-x)**2 + (p1[1]-y)**2)
+            d2 = math.sqrt((p2[0]-x)**2 + (p2[1]-y)**2)
+            d3 = math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+            lineOver.append(-5<d1+d2-d3<5)
+        return any(lineOver)
+
+    def destroy(self):
+        self.node1.line = None
+        self.node2.line = None
+        self.node1.element.cell.grid.pathLines.remove(self)
+        self.node1.active = False
+        self.node2.colour = None
+
+    def update(self, event):
+        if event.type == pg.KEYDOWN: 
+            if event.key == pg.K_BACKSPACE:
+                if self.isOver():
+                    self.destroy()
 
     def calcPoints(self):
         self.p1 = self.node1.center
@@ -158,8 +186,12 @@ class Grid:
                         self.origin = oldorigin.copy()
             if event.type == pg.KEYDOWN:
                 pass
+
             c = self.getOnCell()
             if c != None: c.update(event)
+
+            for l in self.pathLines:
+                l.update(event)
 
     def show(self):
         for i in self.pathLines:
@@ -202,8 +234,13 @@ class Cell:
             if event.key == pg.K_q:
                 print(self, self.backreference, self.element)
             if event.key == pg.K_BACKSPACE:
-                self.element.clearBackreferences()
-                self.element = None
+                if self.element != None:
+                    for i in self.element.inputs+self.element.outputs:
+                        print(self.element.inputs, i.line)
+                        if i.line != None:
+                            i.line.destroy()
+                    self.element.clearBackreferences()
+                    self.element = None
         if event.type == pg.MOUSEBUTTONDOWN:
             if event.button == 1:
                 self.last_pos = pg.mouse.get_pos()
@@ -432,8 +469,9 @@ class Node:
                             self.active = int(not self.active)
                             self.colour = self.element.cell.grid.selected.colour
                             self.setBackreference(self.element.cell.grid.selected)
-                            line = Line(self.element.cell.grid.selected, self, self.colour, self.element.cell.grid.lineC)
-                            self.element.cell.grid.pathLines.append(line)
+                            self.line = Line(self.element.cell.grid.selected, self, self.colour, self.element.cell.grid.lineC)
+                            self.element.cell.grid.selected.line = self.line
+                            self.element.cell.grid.pathLines.append(self.line)
                             self.element.cell.grid.selected = None
 
     def show(self):

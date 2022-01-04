@@ -141,6 +141,10 @@ def buildTree(s):
         
 def parse(s):
 
+    areNotValid = [i not in validChars for i in s]
+    if any(areNotValid):
+        raise ValueError
+
     ast = buildTree(f'({s})')
 
     postfix = ast.traverse(order='pre')
@@ -175,7 +179,10 @@ def parse(s):
     final = Expression(final)
     return final
 
-
+validChars = [chr(i) for i in range(65,91)]
+validChars += [chr(i) for i in range(97, 123)]
+validChars += ['0', '1']
+validChars += ['+', '*', '¬', '(', ')']
 
 # for i in d:
 #     print(i[1].getLatex())

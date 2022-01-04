@@ -18,6 +18,10 @@ def changeScreen(new):
         curScreen = logicScreen
     elif new == 'table':
         curScreen = tableScreen
+    elif new == 'logicHelp':
+        curScreen = logicHelpScreen
+    elif new == 'syntaxHelp':
+        curScreen = syntaxHelpScreen
 
 def tableScreenSetup():
     def buttonFunc(s, tb):
@@ -33,26 +37,45 @@ def tableScreenSetup():
     start = (DIM[1]-buttonH)/2 - 100
     tableScreen.fill(BACKGROUNDC)
     heading = pgu.Label(tableScreen, 'Truth Table', (0, 0, DIM[0], DIM[1]/3), subtitleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
-    homeButton = pgu.Button(tableScreen, 'Home', (20, 20, 125, 70), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
-    entry = pgu.Input(tableScreen, ((DIM[0]-buttonW-150-gap)/2, start, buttonW, buttonH), vLargeFont, [BACKGROUNDC, LBLUE], TEXTC, BORDERC, text='Enter Expression')
+    homeButton = pgu.Button(tableScreen, 'Home', (20, 20, 125, 70), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('main'))
+    entry = pgu.Input(tableScreen, ((DIM[0]-buttonW-150-gap)/2, start, buttonW, buttonH), vLargeFont, [BACKGROUNDC, HIGHLIGHT1], TEXTC, BORDERC, text='Enter Expression')
     errorLabel = pgu.Label(tableScreen, '', ((DIM[0]-buttonW-150-gap)/2 - gap - 150, start, 150, buttonH), largeFont, BACKGROUNDC, TEXTC, align='right')    
     tableBox = pgu.ScrollableSurface(tableScreen, (DIM[0]-buttonW-150-gap)/2, (DIM[1]-buttonH)/2 - 50 + buttonH + gap, (buttonW+200+gap, DIM[1]-((DIM[1]-buttonH)/2 -50 + buttonH + gap*2)), BACKGROUNDC, BORDERC, TEXTC)
-    simplifyButton = pgu.Button(tableScreen, 'Simplify', ((DIM[0]-buttonW-150-gap)/2 + buttonW + gap, start, 150, buttonH), largeFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: buttonFunc(entry.text, tableBox), actionButton=True)
+    simplifyButton = pgu.Button(tableScreen, 'Simplify', ((DIM[0]-buttonW-150-gap)/2 + buttonW + gap, start, 150, buttonH), largeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: buttonFunc(entry.text, tableBox), actionButton=True)
 
 def logicScreenSetup():
     logicScreen.fill(BACKGROUNDC)
     ribbonBorder = pg.draw.rect(logicScreen, BORDERC, (0, 0, DIM[0], 80))
-    ribbon = pg.draw.rect(logicScreen, LBLUE, (0, 0, DIM[0], 80-3))
-    homeButton = pgu.Button(logicScreen, 'Home', (15, 15, 125, 50), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
+    ribbon = pg.draw.rect(logicScreen, HIGHLIGHT2, (0, 0, DIM[0], 80-3))
+    homeButton = pgu.Button(logicScreen, 'Home', (15, 15, 125, 50), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('main'))
+    helpButton = pgu.Button(logicScreen, 'Help', (DIM[0]-15-125, 15, 125, 50), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('logicHelp'))
     widgetBoxBorder = pg.draw.rect(logicScreen, BORDERC, (0, 80, 250, DIM[1]))
     widgetBox = pgu.ScrollableSurface(logicScreen, 0, 80, (250-3, DIM[1]-80), BACKGROUNDC, BORDERC, TEXTC, padding=8)
-    sandboxWindow = wid.Grid(logicScreen, 250, 80, (DIM[0]-250, DIM[1]-80), BACKGROUNDC, TEXTC, TEXTC, BORDERC, LBLUE)
-    switchButton = pgu.Button(widgetBox, 'Switch', (0, (120+10)*0, 210, 120), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeSelectedWidget('switch'))
-    bulbButton = pgu.Button(widgetBox, 'Bulb',     (0, (120+10)*1, 210, 120), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeSelectedWidget('bulb'))
-    andButton = pgu.Button(widgetBox, 'And',       (0, (120+10)*2, 210, 120), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeSelectedWidget('and'))
-    orButton = pgu.Button(widgetBox, 'Or',         (0, (120+10)*3, 210, 120), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeSelectedWidget('or'))
-    notButton = pgu.Button(widgetBox, 'Not',       (0, (120+10)*4, 210, 120), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeSelectedWidget('not'))
-    xorButton = pgu.Button(widgetBox, 'Xor',       (0, (120+10)*5, 210, 120), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeSelectedWidget('xor'))
+    sandboxWindow = wid.Grid(logicScreen, 250, 80, (DIM[0]-250, DIM[1]-80), BACKGROUNDC, TEXTC, TEXTC, HIGHLIGHT1, BORDERC)
+    switchButton = pgu.Button(widgetBox, 'Switch', (0, (120+10)*0, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('switch'))
+    bulbButton = pgu.Button(widgetBox, 'Bulb',     (0, (120+10)*1, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('bulb'))
+    andButton = pgu.Button(widgetBox, 'And',       (0, (120+10)*2, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('and'))
+    orButton = pgu.Button(widgetBox, 'Or',         (0, (120+10)*3, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('or'))
+    notButton = pgu.Button(widgetBox, 'Not',       (0, (120+10)*4, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('not'))
+    xorButton = pgu.Button(widgetBox, 'Xor',       (0, (120+10)*5, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('xor'))
+
+def logicHelpScreenSetup():
+    logicHelpScreen.fill(BACKGROUNDC)
+    heading = pgu.Label(logicHelpScreen, 'Logic Simulator Help', (0, 0, DIM[0], DIM[1]/3), subtitleFont, BACKGROUNDC, TEXTC, align='center', justify='center', addSelf=False)
+    homeButton = pgu.Button(logicHelpScreen, 'Back', (15, 15, 125, 50), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('logic'))
+    text = '''Click on a button in the scrollable side window to select the widget
+The selected widget id indicated by a floating box next to the cursor in the grid window
+Click somewhere in the grid to place the widget
+To connect widgets click on outputs(right circles) and then separatley on inputs(left circles) no dragging is needed
+To delete a connection hover over the line and press backspace
+To delete a widget hover over it and press backspace
+To toggle a switch click on it'''
+    text = text.split('\n')
+    h = 0
+    for line in text:
+        l = pgu.Label(logicHelpScreen, line, (150, 200+h, DIM[0]-300, 75), medFont, BACKGROUNDC, TEXTC, align='center', addSelf=False)
+        h += 75
+    pg.draw.rect(logicHelpScreen, TEXTC, (100, 185, DIM[0]-200, DIM[1]-200), 3)
 
 def simplifierScreenSetup(steps=[]):
     def buttonFunc(e):
@@ -69,9 +92,9 @@ def simplifierScreenSetup(steps=[]):
     gap = 30
     start = (DIM[1]-buttonH)/2 - 100
     heading = pgu.Label(simplifierScreen, 'Boolean Simplification', (0, 0, DIM[0], DIM[1]/3), subtitleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
-    homeButton = pgu.Button(simplifierScreen, 'Home', (20, 20, 125, 70), medFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('main'))
-    entry = pgu.Input(simplifierScreen, ((DIM[0]-buttonW-150-gap)/2, start, buttonW, buttonH), vLargeFont, [BACKGROUNDC, LBLUE], TEXTC, BORDERC, text='Enter Expression')
-    simplifyButton = pgu.Button(simplifierScreen, 'Simplify', ((DIM[0]-buttonW-150-gap)/2 + buttonW + gap, start, 150, buttonH), largeFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: buttonFunc(entry), actionButton=True)
+    homeButton = pgu.Button(simplifierScreen, 'Home', (20, 20, 125, 70), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('main'))
+    entry = pgu.Input(simplifierScreen, ((DIM[0]-buttonW-150-gap)/2, start, buttonW, buttonH), vLargeFont, [BACKGROUNDC, HIGHLIGHT1], TEXTC, BORDERC, text='Enter Expression')
+    simplifyButton = pgu.Button(simplifierScreen, 'Simplify', ((DIM[0]-buttonW-150-gap)/2 + buttonW + gap, start, 150, buttonH), largeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: buttonFunc(entry), actionButton=True)
     errorLabel = pgu.Label(simplifierScreen, '', ((DIM[0]-buttonW-150-gap)/2 - gap - 150, start, 150, buttonH), medFont, BACKGROUNDC, TEXTC, align='right')    
     stepsBox = pgu.ScrollableSurface(simplifierScreen, (DIM[0]-buttonW-150-gap)/2, (DIM[1]-buttonH)/2 - 50 + buttonH + gap, (buttonW+200+gap, DIM[1]-((DIM[1]-buttonH)/2 -50 + buttonH + gap*2)), BACKGROUNDC, BORDERC, TEXTC)
     h=0
@@ -84,16 +107,33 @@ def simplifierScreenSetup(steps=[]):
         tmpI = pgu.ImageRect(stepsBox, tmp, 0, h + 50)
         h += tmp.get_height() + stepsBox.padding/2 + 50
 
+def syntaxHelpScreenSetup():
+    syntaxHelpScreen.fill(BACKGROUNDC)
+    heading = pgu.Label(syntaxHelpScreen, 'Syntax Help', (0, 0, DIM[0], DIM[1]/3), subtitleFont, BACKGROUNDC, TEXTC, align='center', justify='center', addSelf=False)
+    homeButton = pgu.Button(syntaxHelpScreen, 'Back', (15, 15, 125, 50), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('main'))
+    text = '''Operators: OR = +, AND = *, NOT = ¬
+Bracket Rules: OR = (__+__), AND = (__*__) optional (), NOT = ¬(__) optional () if contents is a variable e.g. ¬(A) = ¬A
+Otherwise regular order of operations rules apply.
+Ensure all brackets are paired up properly.
+Variables can be uppercase and lowercase characters only as well as the digits 0 and 1'''
+    text = text.split('\n')
+    h = 0
+    for line in text:
+        l = pgu.Label(syntaxHelpScreen, line, (15, 200+h, DIM[0], 100), medFont, BACKGROUNDC, TEXTC, align='center', addSelf=False)
+        h += 100
+    pg.draw.rect(syntaxHelpScreen, TEXTC, (100, 185, DIM[0]-200, DIM[1]-200), 3)
+
 def mainScreenSetup():
     mainScreen.fill(BACKGROUNDC)
     buttonW = 600
     buttonH = 100
-    gap = 50
-    start = (DIM[1]-buttonH)/2 - buttonH/2
+    gap = 30
+    start = (DIM[1]-buttonH)/2 - buttonH
     heading = pgu.Label(mainScreen, 'b L o g i c.', (0, 0, DIM[0], DIM[1]/3), titleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
-    simplifierButton = pgu.Button(mainScreen, 'Simplifier', ((DIM[0]-buttonW)/2, start, buttonW, buttonH), vLargeFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('simplifier'))
-    logicSimButton = pgu.Button(mainScreen, 'Logic Simulator', ((DIM[0]-buttonW)/2, start + (buttonH + gap), buttonW, buttonH), vLargeFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('logic'))
-    tableButton = pgu.Button(mainScreen, 'Truth Table', ((DIM[0]-buttonW)/2, start + (buttonH + gap)*2, buttonW, buttonH), vLargeFont, BACKGROUNDC, LBLUE, TEXTC, BORDERC, lambda: changeScreen('table'))
+    simplifierButton = pgu.Button(mainScreen, 'Simplifier', ((DIM[0]-buttonW)/2, start, buttonW, buttonH), vLargeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('simplifier'))
+    logicSimButton = pgu.Button(mainScreen, 'Logic Simulator', ((DIM[0]-buttonW)/2, start + (buttonH + gap), buttonW, buttonH), vLargeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('logic'))
+    tableButton = pgu.Button(mainScreen, 'Truth Table', ((DIM[0]-buttonW)/2, start + (buttonH + gap)*2, buttonW, buttonH), vLargeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('table'))
+    syntaxButton = pgu.Button(mainScreen, 'Syntax Help', ((DIM[0]-buttonW)/2, start + (buttonH + gap)*3, buttonW, buttonH), vLargeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('syntaxHelp'))
 
 def createPNG(step):
     latex = step.getLatex()
@@ -157,11 +197,15 @@ titleFont = pg.font.SysFont('Calibri', 121)
 
 DIM = (1450, 725)
 
-TEXTC = (73, 88, 103)
-BORDERC = (254, 95, 85)
-BACKGROUNDC = (247, 247, 255)
-DBLUE = (87, 115, 153)
-LBLUE = (189, 213, 234)
+testc = [(0.05+0.1*i, 0.05+0.1*i, 0.1*(i+1)) for i in range(10)]
+testc = [[k*255 for k in i] for i in testc]
+
+BORDERC = (225, 23, 29)#testc[3]
+BACKGROUNDC = testc[8]
+HIGHLIGHT1 = testc[6]
+HIGHLIGHT2 = testc[7]
+TEXTC = testc[2]
+
 
 display = pg.display.set_mode(DIM)
 clock = pg.time.Clock()
@@ -174,6 +218,10 @@ logicScreen = pgu.Screen(DIM)
 logicScreenSetup()
 tableScreen = pgu.Screen(DIM)
 tableScreenSetup()
+logicHelpScreen = pgu.Screen(DIM)
+logicHelpScreenSetup()
+syntaxHelpScreen = pgu.Screen(DIM)
+syntaxHelpScreenSetup()
 
 curScreen = mainScreen
 run = True
