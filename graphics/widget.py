@@ -283,6 +283,16 @@ class Cell:
                                 self.element = XorElement(self)
                             except OverflowError:
                                 self.element = None
+                        elif selectedWidget == 'nor':
+                            try:
+                                self.element = NorElement(self)
+                            except OverflowError:
+                                self.element = None
+                        elif selectedWidget == 'nand':
+                            try:
+                                self.element = NandElement(self)
+                            except OverflowError:
+                                self.element = None
         if self.element != None: self.element.update(event)          
 
     def show(self):
@@ -501,6 +511,16 @@ class XorElement(Element):
     def __init__(self, cell):
         self.expr = Expression(Product(Sum(Var('A'), Var('B')), Sum(Not(Var('A')), Not(Var('B')))))
         super().__init__(cell, 'Xor', 2, 1)
+
+class NorElement(Element):
+    def __init__(self, cell):
+        self.expr = Expression(Not(Sum(Var('A'), Var('B'))))
+        super().__init__(cell, 'Nor', 2, 1)
+
+class NandElement(Element):
+    def __init__(self, cell):
+        self.expr = Expression(Not(Product(Var('A'), Var('B'))))
+        super().__init__(cell, 'Nand', 2, 1)
         
 class SwitchElement(Element):
     def __init__(self, cell):

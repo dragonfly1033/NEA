@@ -58,6 +58,8 @@ def logicScreenSetup():
     orButton = pgu.Button(widgetBox, 'Or',         (0, (120+10)*3, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('or'))
     notButton = pgu.Button(widgetBox, 'Not',       (0, (120+10)*4, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('not'))
     xorButton = pgu.Button(widgetBox, 'Xor',       (0, (120+10)*5, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('xor'))
+    norButton = pgu.Button(widgetBox, 'Nor',       (0, (120+10)*6, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('nor'))
+    nandButton = pgu.Button(widgetBox, 'Nand',       (0, (120+10)*7, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('nand'))
 
 def logicHelpScreenSetup():
     logicHelpScreen.fill(BACKGROUNDC)
@@ -198,15 +200,15 @@ titleFont = pg.font.SysFont('Calibri', 121)
 DIM = (1450, 725)
 
 testc = [(0.05+0.1*i, 0.05+0.1*i, 0.1*(i+1)) for i in range(10)]
-testc = [[k*255 for k in i] for i in testc]
+testc = [[round(k*255) for k in i] for i in testc]
 
-BORDERC = (225, 23, 29)#testc[3]
+BORDERC = (199, 81, 70)#testc[3]
 BACKGROUNDC = testc[8]
 HIGHLIGHT1 = testc[6]
 HIGHLIGHT2 = testc[7]
 TEXTC = testc[2]
 
-
+print(BORDERC, BACKGROUNDC, HIGHLIGHT1, HIGHLIGHT2, TEXTC)
 display = pg.display.set_mode(DIM)
 clock = pg.time.Clock()
 
