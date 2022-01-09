@@ -96,6 +96,8 @@ class Grid:
         self.widgetC = widgetC
         self.nodeC = nodeC
         self.onC = onC
+        self.selectedWidget = None
+        self.noOfNodes = 0
 
         self.scale = 1
         self.updateScale()
@@ -112,6 +114,13 @@ class Grid:
             for c in row:
                 c.element = None
                 c.backreference = c
+        self.pathLines.clear()
+
+    def getScreen(self):
+        if isinstance(self.display, Screen):
+            return self.display
+        else:
+            return self.display.getScreen()
 
     def updateScale(self):
         nw = round(self.rect[2] * self.scale)
@@ -139,7 +148,10 @@ class Grid:
         return c
 
     def update(self, event):
-        if self.isOver():
+        ret = False
+        updatedBefore = self.display.getScreen().totalUpdates.count(True) > self.display.getScreen().layeredUpdates[self.zlayer].count(True)
+        if self.isOver() and not updatedBefore:
+            ret = True
             if event.type == pg.MOUSEBUTTONDOWN:
                 if event.button == 1:
                     self.isDragging = True
@@ -185,13 +197,15 @@ class Grid:
                         ):
                         self.origin = oldorigin.copy()
             if event.type == pg.KEYDOWN:
-                pass
+                if event.key == pg.K_ESCAPE:
+                    self.selectedWidget = None
 
             c = self.getOnCell()
             if c != None: c.update(event)
 
             for l in self.pathLines:
                 l.update(event)
+        return ret
 
     def show(self):
         for i in self.pathLines:
@@ -199,12 +213,12 @@ class Grid:
         for row in self.cells:
             for c in row:
                 c.show()
-        if selectedWidget != None:
+        if self.selectedWidget != None:
             x, y = pg.mouse.get_pos()
             x, y = x-self.rect[0]-self.origin[0],y-self.rect[1]-self.origin[1]
             icon = pg.Surface((50,50))
             icon.fill((150,150,150))
-            l = pgu.Label(self, selectedWidget, (0,0, 50,50), smallFont, (0,255,255), (0,0,0), addSelf=False, align='center')
+            l = pgu.Label(self, self.selectedWidget, (0,0, 50,50), smallFont, (0,255,255), (0,0,0), addSelf=False, align='center')
             icon.blit(l.label, l.label_rect)
             self.contentSurface.blit(icon, (x+10, y+10))
         self.showSurface.blit(self.contentSurface, self.origin)
@@ -236,11 +250,11 @@ class Cell:
             if event.key == pg.K_BACKSPACE:
                 if self.element != None:
                     for i in self.element.inputs+self.element.outputs:
-                        print(self.element.inputs, i.line)
                         if i.line != None:
                             i.line.destroy()
                     self.element.clearBackreferences()
                     self.element = None
+                    self.grid.selected = None
         if event.type == pg.MOUSEBUTTONDOWN:
             if event.button == 1:
                 self.last_pos = pg.mouse.get_pos()
@@ -253,42 +267,42 @@ class Cell:
                     dx = dy = 0
                 if dx < self.grid.cellW/2 and dy < self.grid.cellW/2:
                     if self.element == None:
-                        if selectedWidget == 'switch':
+                        if self.grid.selectedWidget == 'switch':
                             try:
                                 self.element = SwitchElement(self)
                             except OverflowError:
                                 self.element = None
-                        elif selectedWidget == 'bulb':
+                        elif self.grid.selectedWidget == 'bulb':
                             try:
                                 self.element = BulbElement(self)
                             except OverflowError:
                                 self.element = None
-                        elif selectedWidget == 'and':
+                        elif self.grid.selectedWidget == 'and':
                             try:
                                 self.element = AndElement(self)
                             except OverflowError:
                                 self.element = None
-                        elif selectedWidget == 'or':
+                        elif self.grid.selectedWidget == 'or':
                             try:
                                 self.element = OrElement(self)
                             except OverflowError:
                                 self.element = None
-                        elif selectedWidget == 'not':
+                        elif self.grid.selectedWidget == 'not':
                             try:
                                 self.element = NotElement(self)
                             except OverflowError:
                                 self.element = None
-                        elif selectedWidget == 'xor':
+                        elif self.grid.selectedWidget == 'xor':
                             try:
                                 self.element = XorElement(self)
                             except OverflowError:
                                 self.element = None
-                        elif selectedWidget == 'nor':
+                        elif self.grid.selectedWidget == 'nor':
                             try:
                                 self.element = NorElement(self)
                             except OverflowError:
                                 self.element = None
-                        elif selectedWidget == 'nand':
+                        elif self.grid.selectedWidget == 'nand':
                             try:
                                 self.element = NandElement(self)
                             except OverflowError:
@@ -333,8 +347,8 @@ class Element:
             self.intersectCells.append(c1)
             self.intersectCells.append(c2)
 
-        isEmpty = [i.element == None for i in self.intersectCells]
-        if all(isEmpty):
+        self.isEmpty = [i.element == None for i in self.intersectCells]
+        if all(self.isEmpty):
             for c in self.intersectCells:
                 c.setBackreference(self.cell, self)
         else:
@@ -407,12 +421,13 @@ class Node:
     def __init__(self, element, typee, number):
         self.element = element
         self.type = typee
-        self.colour = (255,0,0) if self.type == 'input' else r.choice(COLOURS)#(r.randint(0,255),r.randint(0,255),r.randint(0,255))
+        self.colour = (255,0,0) if self.type == 'input' else COLOURS[self.element.cell.grid.noOfNodes]#(r.randint(0,255),r.randint(0,255),r.randint(0,255))
         self.active = 0
         self.v = 0
         self.number = number
         self.backreference = self
         self.line = None
+        self.element.cell.grid.noOfNodes += 1
 
     def setBackreference(self, other):
         self.backreference = other
@@ -573,7 +588,16 @@ for i in range(100):
     h = i*da
     l = r.randint(30, 80)/100
     s = r.randint(30, 100)/100
-    c = [x*255 for x in hls_to_rgb(h, s, l)]
+    c = [x*255 for x in hls_to_rgb(h, l, s)]
     COLOURS.append(c)
 
-selectedWidget = None
+HEIGHTS = {
+    AndElement:2,
+    OrElement:2,
+    NotElement:1,
+    NandElement:2,
+    NorElement:2,
+    SwitchElement:1,
+    BulbElement:1,
+    XorElement:2
+}

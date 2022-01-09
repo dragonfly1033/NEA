@@ -1,5 +1,9 @@
-import parsing.binaryTree as bt
-from parsing.tokens import *
+if __name__ == '__main__':
+    import binaryTree as bt
+    from tokens import *
+else:
+    import parsing.binaryTree as bt
+    from parsing.tokens import *
 import re
 from collections import OrderedDict
 
@@ -144,9 +148,10 @@ def parse(s):
     areNotValid = [i not in validChars for i in s]
     if any(areNotValid):
         raise ValueError
+    if len(s) == 1:
+        return Expression(Var(s))
 
     ast = buildTree(f'({s})')
-
     postfix = ast.traverse(order='pre')
     units = tokenize(postfix)
     for i in units:
@@ -162,7 +167,7 @@ def parse(s):
         if v1 in units:
             v1 = units[v1]
         else:
-            v1 = Var(v1)
+            v1 = Var(v1)    
 
         if v2 in units:
             v2 = units[v2]
@@ -175,6 +180,7 @@ def parse(s):
             units[i] = Sum(v1, v2)
         elif op == '¬':
             units[i] = Not(v2)
+
     final = units.popitem()[1]
     final = Expression(final)
     return final

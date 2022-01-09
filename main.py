@@ -4,66 +4,42 @@ from graphics import pygameutil as pgu
 from graphics import widget as wid
 from parsing import parse
 from parsing.tokens import *
+import accounts.sql as sql
 
-def changeSelectedWidget(new):
-    wid.selectedWidget = new
+def changeSelectedWidget(sw, new):
+    sw.selectedWidget = new
 
-def changeScreen(new):
+def changeScreen(new, *args):
     global curScreen
     if new == 'main':
         curScreen = mainScreen
+        mainScreenSetup(*args)
     elif new == 'simplifier':
         curScreen = simplifierScreen
+        simplifierScreenSetup(*args)
     elif new == 'logic':
         curScreen = logicScreen
+        logicScreenSetup(*args)
     elif new == 'table':
         curScreen = tableScreen
+        tableScreenSetup(*args)
     elif new == 'logicHelp':
         curScreen = logicHelpScreen
+        logicHelpScreenSetup(*args)
     elif new == 'syntaxHelp':
         curScreen = syntaxHelpScreen
+        syntaxHelpScreenSetup(*args)
+    elif new == 'login':
+        curScreen = loginScreen
+        loginScreenSetup(*args)
+    # curScreen.switchTo()
 
-def tableScreenSetup():
-    def buttonFunc(s, tb):
-        val = validateExpression(s)
-        if not val:
-            errorLabel.text = 'Error with input'
-        else:
-            errorLabel.text = ''
-            drawTable(s, tb)
-    buttonW = 600
-    buttonH = 100
-    gap = 30
-    start = (DIM[1]-buttonH)/2 - 100
-    tableScreen.fill(BACKGROUNDC)
-    heading = pgu.Label(tableScreen, 'Truth Table', (0, 0, DIM[0], DIM[1]/3), subtitleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
-    homeButton = pgu.Button(tableScreen, 'Home', (20, 20, 125, 70), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('main'))
-    entry = pgu.Input(tableScreen, ((DIM[0]-buttonW-150-gap)/2, start, buttonW, buttonH), vLargeFont, [BACKGROUNDC, HIGHLIGHT1], TEXTC, BORDERC, text='Enter Expression')
-    errorLabel = pgu.Label(tableScreen, '', ((DIM[0]-buttonW-150-gap)/2 - gap - 150, start, 150, buttonH), largeFont, BACKGROUNDC, TEXTC, align='right')    
-    tableBox = pgu.ScrollableSurface(tableScreen, (DIM[0]-buttonW-150-gap)/2, (DIM[1]-buttonH)/2 - 50 + buttonH + gap, (buttonW+200+gap, DIM[1]-((DIM[1]-buttonH)/2 -50 + buttonH + gap*2)), BACKGROUNDC, BORDERC, TEXTC)
-    simplifyButton = pgu.Button(tableScreen, 'Simplify', ((DIM[0]-buttonW-150-gap)/2 + buttonW + gap, start, 150, buttonH), largeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: buttonFunc(entry.text, tableBox), actionButton=True)
-
-def logicScreenSetup():
-    logicScreen.fill(BACKGROUNDC)
-    ribbonBorder = pg.draw.rect(logicScreen, BORDERC, (0, 0, DIM[0], 80))
-    ribbon = pg.draw.rect(logicScreen, HIGHLIGHT2, (0, 0, DIM[0], 80-3))
-    homeButton = pgu.Button(logicScreen, 'Home', (15, 15, 125, 50), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('main'))
-    helpButton = pgu.Button(logicScreen, 'Help', (DIM[0]-15-125, 15, 125, 50), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('logicHelp'))
-    widgetBoxBorder = pg.draw.rect(logicScreen, BORDERC, (0, 80, 250, DIM[1]))
-    widgetBox = pgu.ScrollableSurface(logicScreen, 0, 80, (250-3, DIM[1]-80), BACKGROUNDC, BORDERC, TEXTC, padding=8)
-    sandboxWindow = wid.Grid(logicScreen, 250, 80, (DIM[0]-250, DIM[1]-80), BACKGROUNDC, TEXTC, TEXTC, HIGHLIGHT1, BORDERC)
-    switchButton = pgu.Button(widgetBox, 'Switch', (0, (120+10)*0, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('switch'))
-    bulbButton = pgu.Button(widgetBox, 'Bulb',     (0, (120+10)*1, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('bulb'))
-    andButton = pgu.Button(widgetBox, 'And',       (0, (120+10)*2, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('and'))
-    orButton = pgu.Button(widgetBox, 'Or',         (0, (120+10)*3, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('or'))
-    notButton = pgu.Button(widgetBox, 'Not',       (0, (120+10)*4, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('not'))
-    xorButton = pgu.Button(widgetBox, 'Xor',       (0, (120+10)*5, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('xor'))
-    norButton = pgu.Button(widgetBox, 'Nor',       (0, (120+10)*6, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('nor'))
-    nandButton = pgu.Button(widgetBox, 'Nand',       (0, (120+10)*7, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget('nand'))
-
-def logicHelpScreenSetup():
+def logicHelpScreenSetup(*args):
+    logicHelpScreen.clear()
     logicHelpScreen.fill(BACKGROUNDC)
-    heading = pgu.Label(logicHelpScreen, 'Logic Simulator Help', (0, 0, DIM[0], DIM[1]/3), subtitleFont, BACKGROUNDC, TEXTC, align='center', justify='center', addSelf=False)
+    logicHelpScreen.redraw = lambda: pg.draw.rect(logicHelpScreen, TEXTC, (100, 185, DIM[0]-200, DIM[1]-200), 3)
+    logicHelpScreen.redraw()
+    heading = pgu.Label(logicHelpScreen, 'Logic Simulator Help', (0, 100, DIM[0], DIM[1]/3 - 200), subtitleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
     homeButton = pgu.Button(logicHelpScreen, 'Back', (15, 15, 125, 50), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('logic'))
     text = '''Click on a button in the scrollable side window to select the widget
 The selected widget id indicated by a floating box next to the cursor in the grid window
@@ -75,11 +51,150 @@ To toggle a switch click on it'''
     text = text.split('\n')
     h = 0
     for line in text:
-        l = pgu.Label(logicHelpScreen, line, (150, 200+h, DIM[0]-300, 75), medFont, BACKGROUNDC, TEXTC, align='center', addSelf=False)
-        h += 75
-    pg.draw.rect(logicHelpScreen, TEXTC, (100, 185, DIM[0]-200, DIM[1]-200), 3)
+        l = pgu.Label(logicHelpScreen, line, (106, 190+h, DIM[0]-212, 80), medFont, BACKGROUNDC, TEXTC, align='center')
+        h += 72
 
-def simplifierScreenSetup(steps=[]):
+def syntaxHelpScreenSetup(*args):
+    syntaxHelpScreen.clear()
+    syntaxHelpScreen.fill(BACKGROUNDC)
+    syntaxHelpScreen.redraw = lambda: pg.draw.rect(syntaxHelpScreen, TEXTC, (100, 185, DIM[0]-200, DIM[1]-200), 3)
+    syntaxHelpScreen.redraw()
+    heading = pgu.Label(syntaxHelpScreen, 'Syntax Help', (0, 100, DIM[0], DIM[1]/3 - 200), subtitleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
+    homeButton = pgu.Button(syntaxHelpScreen, 'Back', (15, 15, 125, 50), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('main'))
+    text = '''Operators: OR = +, AND = *, NOT = ¬
+Bracket Rules: OR = (__+__), AND = (__*__) optional (), NOT = ¬(__) optional () if contents is a variable e.g. ¬(A) = ¬A
+Otherwise regular order of operations rules apply.
+Ensure all brackets are paired up properly.
+Variables can be uppercase and lowercase characters only as well as the digits 0 and 1'''
+    text = text.split('\n')
+    h = 0
+    for line in text:
+        l = pgu.Label(syntaxHelpScreen, line, (106, 190+h, DIM[0]-212, 100), medFont, BACKGROUNDC, TEXTC, align='center')
+        h += 100
+
+def tableScreenSetup(*args):
+    tableScreen.clear()
+    def buttonFunc(s, tb, screen):
+        val = validateExpression(s.text)
+        if not val:
+            errorLabel.text = 'Error with input'
+            screen.info['expr'] = None
+        else:
+            errorLabel.text = ''
+            drawTable(s.text, tb)
+            screen.info['expr'] = parse.parse(s.text)
+        s.reset()
+
+    def buttonFunc2(errorLabel, screen):
+        if 'expr' in screen.info:
+            expr = parse.parse(screen.info['expr'].rep)
+        else:
+            expr = None
+        exprToLogic(expr, errorLabel)
+
+    def buttonFunc3(errorLabel, screen):
+        if 'expr' in screen.info:
+            expr = screen.info['expr']
+        else:
+            expr = None
+        exprToSimplify(expr, errorLabel)
+        
+    buttonW = 600
+    buttonH = 100
+    gap = 30
+    start = (DIM[1]-buttonH)/2 - 100
+    tableScreen.fill(BACKGROUNDC)
+    heading = pgu.Label(tableScreen, 'Truth Table', (0, 0, DIM[0], DIM[1]/3), subtitleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
+    homeButton = pgu.Button(tableScreen, 'Home', (20, 20, 125, 70), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('main'))
+    entry = pgu.Input(tableScreen, ((DIM[0]-buttonW-150-gap)/2, start, buttonW, buttonH), vLargeFont, [BACKGROUNDC, HIGHLIGHT1], TEXTC, BORDERC, text='Enter Expression')
+    errorLabel = pgu.Label(tableScreen, '', ((DIM[0]-buttonW-150-gap)/2 - gap - 275, start, 275, buttonH), medFont, BACKGROUNDC, TEXTC, align='right')    
+    tableBox = pgu.ScrollableSurface(tableScreen, (DIM[0]-buttonW-150-gap)/2, start + buttonH + gap - 10, (buttonW+150+gap, DIM[1]-(start+buttonH+gap-10+gap)), BACKGROUNDC, BORDERC, TEXTC, barWidth=10)
+    tabulateButton = pgu.Button(tableScreen, 'Tabulate', ((DIM[0]-buttonW-150-gap)/2 + buttonW + gap, start, 150, buttonH), largeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: buttonFunc(entry, tableBox, tableScreen), actionButton=True)
+    
+    logicConvertButton = pgu.Button(tableScreen, 'Answer => Logic Gates', ((DIM[0]-buttonW-150-gap)/2 + buttonW + gap + 150 + gap , start, 275, buttonH), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: buttonFunc2(errorLabel, tableScreen))
+    simplifyConvertButton = pgu.Button(tableScreen, 'Answer => Simplify', ((DIM[0]-buttonW-150-gap)/2 + buttonW + gap + 150 + gap , start+buttonH+gap, 275, buttonH), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: buttonFunc3(errorLabel, tableScreen))
+
+    if len(args) > 0:
+        entry.text = args[0]
+        buttonFunc(entry, tableBox, tableScreen)
+
+def logicScreenSetup(*args):
+    global sandboxWindow
+    def exprToTable(expr, errorLabel):
+        if expr == None:
+            errorLabel.text = 'No Circuits'
+            return
+        if len(expr) > 1:
+            for i in logicScreen.widgets:
+                if i in toRemove:
+                    logicScreen.widgets.remove(i)
+            for i in logicScreen.embed:
+                if i in toRemove:
+                    logicScreen.embed.remove(i)
+            toRemove.clear()
+            errorLabel.text = 'Multiple Circuits Detected'
+            layer = pgu.LayeredSurface(logicHelpScreen, DIM, 3, pg.SRCALPHA)
+            d = pgu.DropDown(logicScreen, layer, (750, 15, 300, 50), 200, 'Select Circuit', BACKGROUNDC, TEXTC, BACKGROUNDC, HIGHLIGHT1, BORDERC, medFont, zlayer=3)
+            s = pgu.ScrollableSurface(d, 0, 0, (295, 195), BACKGROUNDC, BORDERC, HIGHLIGHT1, barWidth=5, zlayer=3)
+            for i, e in enumerate(expr):
+                n = pgu.Button(s, e.rep, (0, 55*i, 250, 50), smallFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda e=e: changeScreen('table', e.rep), zlayer=3) 
+                toRemove.append(n)
+            toRemove.append(d)
+            toRemove.append(s)
+        else:
+            changeScreen('table', expr[0].rep)
+    def exprToSimplifyWrapper(expr, errorLabel):
+        if expr == None:
+            errorLabel.text = 'No Circuits'
+            return
+        if len(expr) > 1:
+            for i in logicScreen.widgets:
+                if i in toRemove:
+                    logicScreen.widgets.remove(i)
+            for i in logicScreen.embed:
+                if i in toRemove:
+                    logicScreen.embed.remove(i)
+            toRemove.clear()
+            errorLabel.text = 'Multiple Circuits Detected'
+            layer = pgu.LayeredSurface(logicHelpScreen, DIM, 3, pg.SRCALPHA)
+            d = pgu.DropDown(logicScreen, layer, (750, 15, 300, 50), 200, 'Select Circuit', BACKGROUNDC, TEXTC, BACKGROUNDC, HIGHLIGHT1, BORDERC, medFont, zlayer=3)
+            s = pgu.ScrollableSurface(d, 0, 0, (295, 195), BACKGROUNDC, BORDERC, HIGHLIGHT1, barWidth=5, zlayer=3)
+            for i, e in enumerate(expr):
+                n = pgu.Button(s, e.rep, (0, 55*i, 250, 50), smallFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda e=e: exprToSimplify(e, errorLabel), zlayer=3) 
+                toRemove.append(n)
+            toRemove.append(d)
+            toRemove.append(s)
+        else:
+            exprToSimplify(expr[0], errorLabel)
+    def redraw():
+        ribbonBorder = pg.draw.rect(logicScreen, BORDERC, (0, 0, DIM[0], 80))
+        ribbon = pg.draw.rect(logicScreen, HIGHLIGHT2, (0, 0, DIM[0], 80-3))
+        widgetBoxBorder = pg.draw.rect(logicScreen, BORDERC, (0, 80, 250, DIM[1]))
+
+    logicScreen.redraw = redraw
+    logicScreen.clear()
+    logicScreen.fill(BACKGROUNDC)
+    logicScreen.redraw()
+    homeButton = pgu.Button(logicScreen, 'Home', (15, 15, 125, 50), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('main'))
+    helpButton = pgu.Button(logicScreen, 'Help', (DIM[0]-15-125, 15, 125, 50), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('logicHelp'))
+    widgetBox = pgu.ScrollableSurface(logicScreen, 0, 80, (250-3, DIM[1]-80), BACKGROUNDC, BORDERC, TEXTC, padding=8)
+    sandboxWindow = wid.Grid(logicScreen, 250, 80, (DIM[0]-250, DIM[1]-80), BACKGROUNDC, TEXTC, TEXTC, HIGHLIGHT1, BORDERC)
+    switchButton = pgu.Button(widgetBox, 'Switch', (0, (120+10)*0, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'switch'))
+    bulbButton = pgu.Button(widgetBox, 'Bulb',     (0, (120+10)*1, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'bulb'))
+    andButton = pgu.Button(widgetBox, 'And',       (0, (120+10)*2, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'and'))
+    orButton = pgu.Button(widgetBox, 'Or',         (0, (120+10)*3, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'or'))
+    notButton = pgu.Button(widgetBox, 'Not',       (0, (120+10)*4, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'not'))
+    xorButton = pgu.Button(widgetBox, 'Xor',       (0, (120+10)*5, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'xor'))
+    norButton = pgu.Button(widgetBox, 'Nor',       (0, (120+10)*6, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'nor'))
+    nandButton = pgu.Button(widgetBox, 'Nand',     (0, (120+10)*7, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'nand'))
+    
+    errorLabel = pgu.Label(logicScreen, '', (435, 15, 300, 50), medFont, HIGHLIGHT2, TEXTC, align='center')    
+    simplifyButton = pgu.Button(logicScreen, 'Simplify', (155, 15, 125, 50), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: exprToSimplifyWrapper(gatesToExpr(), errorLabel))
+    tabulateButton = pgu.Button(logicScreen, 'Tabulate', (295, 15, 125, 50), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: exprToTable(gatesToExpr(), errorLabel))
+
+def simplifierScreenSetup(*args, steps=[]):
+    global tableScreen
+    simplifierScreen.clear()
     def buttonFunc(e):
         val = validateExpression(e.text)
         if not val:
@@ -87,18 +202,25 @@ def simplifierScreenSetup(steps=[]):
         else:
             errorLabel.text = ''
             simplify(e.text)
-            e.text = ''
+        e.reset()
+    
+    def tableConvert(expr, el):
+        if expr == None:
+            el.text = 'No Answer'
+        else:
+            changeScreen('table', expr.rep)
+
     simplifierScreen.fill(BACKGROUNDC)
     buttonW = 600
     buttonH = 100
     gap = 30
-    start = (DIM[1]-buttonH)/2 - 100
+    start = (DIM[1]-buttonH)/2 - buttonH
     heading = pgu.Label(simplifierScreen, 'Boolean Simplification', (0, 0, DIM[0], DIM[1]/3), subtitleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
     homeButton = pgu.Button(simplifierScreen, 'Home', (20, 20, 125, 70), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('main'))
     entry = pgu.Input(simplifierScreen, ((DIM[0]-buttonW-150-gap)/2, start, buttonW, buttonH), vLargeFont, [BACKGROUNDC, HIGHLIGHT1], TEXTC, BORDERC, text='Enter Expression')
     simplifyButton = pgu.Button(simplifierScreen, 'Simplify', ((DIM[0]-buttonW-150-gap)/2 + buttonW + gap, start, 150, buttonH), largeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: buttonFunc(entry), actionButton=True)
-    errorLabel = pgu.Label(simplifierScreen, '', ((DIM[0]-buttonW-150-gap)/2 - gap - 150, start, 150, buttonH), medFont, BACKGROUNDC, TEXTC, align='right')    
-    stepsBox = pgu.ScrollableSurface(simplifierScreen, (DIM[0]-buttonW-150-gap)/2, (DIM[1]-buttonH)/2 - 50 + buttonH + gap, (buttonW+200+gap, DIM[1]-((DIM[1]-buttonH)/2 -50 + buttonH + gap*2)), BACKGROUNDC, BORDERC, TEXTC)
+    errorLabel = pgu.Label(simplifierScreen, '', ((DIM[0]-buttonW-150-gap)/2 - gap - 275, start, 275, buttonH), medFont, BACKGROUNDC, TEXTC, align='right')    
+    stepsBox = pgu.ScrollableSurface(simplifierScreen, (DIM[0]-buttonW-150-gap)/2, start + buttonH + gap - 10, (buttonW+150+gap,  DIM[1]-(start+buttonH+gap-10+gap)), BACKGROUNDC, BORDERC, TEXTC, barWidth=10)
     h=0
     for i, step in enumerate(steps[:-1]):
         createPNG(step[1])
@@ -109,33 +231,43 @@ def simplifierScreenSetup(steps=[]):
         tmpI = pgu.ImageRect(stepsBox, tmp, 0, h + 50)
         h += tmp.get_height() + stepsBox.padding/2 + 50
 
-def syntaxHelpScreenSetup():
-    syntaxHelpScreen.fill(BACKGROUNDC)
-    heading = pgu.Label(syntaxHelpScreen, 'Syntax Help', (0, 0, DIM[0], DIM[1]/3), subtitleFont, BACKGROUNDC, TEXTC, align='center', justify='center', addSelf=False)
-    homeButton = pgu.Button(syntaxHelpScreen, 'Back', (15, 15, 125, 50), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('main'))
-    text = '''Operators: OR = +, AND = *, NOT = ¬
-Bracket Rules: OR = (__+__), AND = (__*__) optional (), NOT = ¬(__) optional () if contents is a variable e.g. ¬(A) = ¬A
-Otherwise regular order of operations rules apply.
-Ensure all brackets are paired up properly.
-Variables can be uppercase and lowercase characters only as well as the digits 0 and 1'''
-    text = text.split('\n')
-    h = 0
-    for line in text:
-        l = pgu.Label(syntaxHelpScreen, line, (15, 200+h, DIM[0], 100), medFont, BACKGROUNDC, TEXTC, align='center', addSelf=False)
-        h += 100
-    pg.draw.rect(syntaxHelpScreen, TEXTC, (100, 185, DIM[0]-200, DIM[1]-200), 3)
+    if len(steps) > 0:
+        expr = parse.parse(steps[-1][1].rep)
+    else:
+        expr = None
+    logicConvertButton = pgu.Button(simplifierScreen, 'Answer => Logic Gates', ((DIM[0]-buttonW-150-gap)/2 + buttonW + gap + 150 + gap , start, 275, buttonH), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: exprToLogic(expr, errorLabel))
+    tableConvertButton = pgu.Button(simplifierScreen, 'Answer => Truth Table', ((DIM[0]-buttonW-150-gap)/2 + buttonW + gap + 150 + gap , start+buttonH+gap, 275, buttonH), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: tableConvert(expr, errorLabel))
 
-def mainScreenSetup():
-    mainScreen.fill(BACKGROUNDC)
+def loginScreenSetup(*args):
+    loginScreen.fill(BACKGROUNDC)
     buttonW = 600
     buttonH = 100
     gap = 30
-    start = (DIM[1]-buttonH)/2 - buttonH
+    start = (DIM[1]-buttonH)/2 - 75
+    heading = pgu.Label(loginScreen, 'Login', (0, 0, DIM[0], DIM[1]/3), titleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
+    homeButton = pgu.Button(loginScreen, 'Home', (20, 20, 125, 70), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('main'))
+    uname = pgu.Input(loginScreen, ((DIM[0]-buttonW)/2, start, buttonW, buttonH), vLargeFont, [BACKGROUNDC, HIGHLIGHT1], TEXTC, BORDERC, text='Enter Username')
+    passwd = pgu.Input(loginScreen, ((DIM[0]-buttonW)/2, start + buttonH + gap, buttonW, buttonH), vLargeFont, [BACKGROUNDC, HIGHLIGHT1], TEXTC, BORDERC, text='Enter Password')
+
+    loginErrorLabel = pgu.Label(loginScreen, '', ((DIM[0]-buttonW)/2 - 350 - gap, start + buttonH*2.5 + gap*2, 350, buttonH), largeFont, BACKGROUNDC, TEXTC, align='right')
+    registerErrorLabel = pgu.Label(loginScreen, '', ((DIM[0]-buttonW)/2 + buttonW + gap, start + buttonH*2.5 + gap*2, 350, buttonH), largeFont, BACKGROUNDC, TEXTC, align='left')
+    
+    loginButton = pgu.Button(loginScreen, 'Login', ((DIM[0]-buttonW)/2, start + buttonH*2 + gap*2 + buttonH/2, (buttonW-gap)/2, buttonH), vLargeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: login(uname, passwd, loginErrorLabel))
+    registerButton = pgu.Button(loginScreen, 'Register', ((DIM[0]-buttonW)/2 + (buttonW-gap)/2 + gap, start + buttonH*2 + gap*2 + buttonH/2, (buttonW-gap)/2, buttonH), vLargeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: register(uname, passwd, registerErrorLabel))
+
+def mainScreenSetup(*args):
+    mainScreen.clear()
+    mainScreen.fill(BACKGROUNDC)
+    buttonW = 600
+    buttonH = 100
+    gap = 40
+    start = (DIM[1]-buttonH)/2 - buttonH + 75
     heading = pgu.Label(mainScreen, 'b L o g i c.', (0, 0, DIM[0], DIM[1]/3), titleFont, BACKGROUNDC, TEXTC, align='center', justify='center')
-    simplifierButton = pgu.Button(mainScreen, 'Simplifier', ((DIM[0]-buttonW)/2, start, buttonW, buttonH), vLargeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('simplifier'))
-    logicSimButton = pgu.Button(mainScreen, 'Logic Simulator', ((DIM[0]-buttonW)/2, start + (buttonH + gap), buttonW, buttonH), vLargeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('logic'))
-    tableButton = pgu.Button(mainScreen, 'Truth Table', ((DIM[0]-buttonW)/2, start + (buttonH + gap)*2, buttonW, buttonH), vLargeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('table'))
-    syntaxButton = pgu.Button(mainScreen, 'Syntax Help', ((DIM[0]-buttonW)/2, start + (buttonH + gap)*3, buttonW, buttonH), vLargeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('syntaxHelp'))
+    simplifierButton = pgu.Button(mainScreen, 'Simplifier', ((DIM[0]-buttonW)/2, start, buttonW, buttonH), largeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('simplifier'))
+    logicSimButton = pgu.Button(mainScreen, 'Logic Simulator', ((DIM[0]-buttonW)/2, start + (buttonH + gap), buttonW, buttonH), largeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('logic'))
+    tableButton = pgu.Button(mainScreen, 'Truth Table', ((DIM[0]-buttonW)/2, start + (buttonH + gap)*2, buttonW, buttonH), largeFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('table'))
+    loginButton = pgu.Button(mainScreen, 'Login', (20, 20, 200, buttonH*0.8), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('login'))
+    syntaxButton = pgu.Button(mainScreen, 'Syntax Help', (DIM[0]-20-200, 20, 200, buttonH*0.8), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('syntaxHelp'))
 
 def createPNG(step):
     latex = step.getLatex()
@@ -186,9 +318,227 @@ def validateExpression(s):
     except:
         return False
 
+def exprToLogic(expr, errorLabel):
+    if expr == None:
+        errorLabel.text = 'No Answer'
+        return
+
+    gates, links, switches, depth, depths, heights = exprToGates(expr, [], [], [], 0, [] ,{})
+    gates, links, depths, heights = resolveDuplicates(gates, links, switches, depths, heights)
+    coords = getCoords(gates, links, depths, heights)
+    # print(f'P={coords}\nH={[wid.HEIGHTS[i] for i in gates]}')
+    plotLogicFromExpr(gates, links, coords)
+
+def exprToGates(expr, gates=[], links=[], switches=[], depth=0, depths=[], heights={}):  
+    depth += 1
+    ind = len(gates)
+    if isinstance(expr, Sum):
+        t1 = expr.terms[0]
+        t2 = expr.terms[1]
+        gates.append(wid.OrElement)
+        links.append([ind+1, ind+2])
+        switches.append(None)
+        depths.append(depth)
+        gates, links, switches, depth, depths, heights = exprToGates(t1, gates, links, switches, depth, depths, heights)
+        depth -= 1 
+        newind = len(gates)
+        links[ind][1] = newind
+        gates, links, switches, depth, depths, heights = exprToGates(t2, gates, links, switches, depth, depths, heights)
+        depth -= 1
+        if depth in heights: heights[depth] += 2
+        else: heights[depth] = 2
+        return gates, links, switches, depth, depths, heights
+    elif isinstance(expr, Product):
+        t1 = expr.terms[0]
+        t2 = expr.terms[1]
+        gates.append(wid.AndElement)
+        links.append([ind+1, ind+2])
+        switches.append(None)
+        depths.append(depth)
+        gates, links, switches, depth, depths, heights = exprToGates(t1, gates, links, switches, depth, depths, heights)
+        depth -= 1 
+        newind = len(gates)
+        links[ind][1] = newind
+        gates, links, switches, depth, depths, heights = exprToGates(t2, gates, links, switches, depth, depths, heights)
+        depth -= 1
+        if depth in heights: heights[depth] += 2
+        else: heights[depth] = 2
+        return gates, links, switches, depth, depths, heights
+    elif isinstance(expr, Not):
+        t1 = expr.terms[0]
+        gates.append(wid.NotElement)
+        links.append([ind+1])
+        switches.append(None)
+        depths.append(depth)
+        gates, links, switches, depth, depths, heights = exprToGates(t1, gates, links, switches, depth, depths, heights)
+        depth -= 1 
+        if depth in heights: heights[depth] += 1
+        else: heights[depth] = 1
+        return gates, links, switches, depth, depths, heights
+    elif isinstance(expr, Var):
+        gates.append(wid.SwitchElement)
+        links.append([None])
+        switches.append(expr.terms[0])
+        depths.append(depth)
+        if depth in heights: heights[depth] += 1
+        else: heights[depth] = 1
+        return gates, links, switches, depth, depths, heights
+    else:
+        t1 = expr.terms[0]
+        gates.append(wid.BulbElement)
+        links.append([ind+1])
+        switches.append(None)
+        depths.append(depth)
+        gates, links, switches, depth, depths, heights = exprToGates(t1, gates, links, switches, depth, depths, heights)
+        depth -= 1 
+        if depth in heights: heights[depth] += 1
+        else: heights[depth] = 1
+        return gates, links, switches, depth, depths, heights
+
+def resolveDuplicates(gates, links, switches, depths, heights):
+    gateIDs = [i if switches[i] == None else switches[i] for i in range(len(switches))]
+    newSw = []
+    count = 0
+    for i, v in enumerate(gateIDs):
+        if v not in newSw:
+            newSw.append(v)
+        else:
+            if depths[i-count]>depths[newSw.index(v)-count]:
+                ind = newSw.index(v)
+                newSw = newSw[:ind] + newSw[ind+1:]
+                newSw.append(v)
+            else:
+                ind = i-count
+            heights[depths[ind]] -= wid.HEIGHTS[gates[ind]]
+            gates = gates[:ind] + gates[ind+1:]
+            links = links[:ind] + links[ind+1:]
+            depths = depths[:ind] + depths[ind+1:]
+            count += 1
+    for i in range(len(links)):
+        for j in range(len(links[i])):
+            if links[i][j] != None:
+                val = gateIDs[links[i][j]]
+                if val != None:
+                    links[i][j] = newSw.index(val)
+    return gates, links, depths, heights
+
+def getCoords(gates, links, depths, heights):
+    coords = []
+    doneHeights = {k:0 for k in heights.keys()}
+    for i in range(len(gates)):
+        depth = depths[i]
+        x = 79 - 2*(depth-1)
+        y = 39 - round(heights[depth]/2) + doneHeights[depth]
+        doneHeights[depth] += wid.HEIGHTS[gates[i]]
+        coords.append((x, y))
+    return coords
+        
+def plotLogicFromExpr(gates, links, coords):
+    changeScreen('logic')
+    gateElements = []
+    for i in range(len(gates)):
+        x, y = coords[i]
+        gate = gates[i]
+        cell = sandboxWindow.cells[y][x]
+        try:
+            cell.element = gate(cell)
+        except OverflowError:
+            cell.element = None
+        gateElements.append(cell.element)
+
+    for i in range(len(gates)):
+        x, y = coords[i]
+        element = sandboxWindow.cells[y][x].element
+        if links[i][0] != None and element != None:
+            for ind, l in enumerate(links[i]):
+                n1 = element.inputs[ind]
+                n2 = gateElements[l].outputs[0]
+                n2.active = 1
+                n1.active = 1
+                n1.colour = n2.colour
+                n1.setBackreference(n2)
+                n1.line = wid.Line(n2, n1, n1.colour, sandboxWindow.lineC)
+                n2.line = n1.line
+                sandboxWindow.pathLines.append(n1.line)
+
+def exprToSimplify(expr, errorLabel):
+    if expr == None:
+        errorLabel.text = 'No Answer'
+        return
+    changeScreen('simplifier')
+    simplify(expr.rep)
+
+def gatesToExpr():
+    circuits = []
+    for row in sandboxWindow.cells:
+        for cell in row:
+            if type(cell.element) == wid.BulbElement and cell.backreference == cell:
+                c = buildExpression(cell.element, {})
+                if c != None: circuits.append(c[0])
+    if len(circuits) > 0:
+        return circuits
+    else:
+        return None
+
+def buildExpression(element, count={}):
+    if isinstance(element, wid.BulbElement):
+        if all([i.line != None for i in element.inputs]):
+            n1 = element.inputs[0].line.node1.element
+            obj, count = buildExpression(n1, count)
+            return Expression(obj), count
+    elif isinstance(element, wid.AndElement):
+        if all([i.line != None for i in element.inputs]):
+            n1 = element.inputs[0].line.node1.element
+            obj1, count = buildExpression(n1, count)
+            n2 = element.inputs[1].line.node1.element
+            obj2, count = buildExpression(n2, count)
+            return Product(obj1, obj2), count
+    elif isinstance(element, wid.OrElement):
+        if all([i.line != None for i in element.inputs]):
+            n1 = element.inputs[0].line.node1.element
+            obj1, count = buildExpression(n1, count)
+            n2 = element.inputs[1].line.node1.element
+            obj2, count = buildExpression(n2, count)
+            return Sum(obj1, obj2), count
+    elif isinstance(element, wid.NotElement):
+        if all([i.line != None for i in element.inputs]):
+            n1 = element.inputs[0].line.node1.element
+            obj, count = buildExpression(n1, count)
+            return Not(obj), count
+    elif isinstance(element, wid.NandElement):
+        if all([i.line != None for i in element.inputs]):
+            n1 = element.inputs[0].line.node1.element
+            obj1, count = buildExpression(n1, count)
+            n2 = element.inputs[1].line.node1.element
+            obj2, count = buildExpression(n2, count)
+            return Not(Product(obj1, obj2)), count
+    elif isinstance(element, wid.NorElement):
+        if all([i.line != None for i in element.inputs]):
+            n1 = element.inputs[0].line.node1.element
+            obj1, count = buildExpression(n1, count)
+            n2 = element.inputs[1].line.node1.element
+            obj2, count = buildExpression(n2, count)
+            return Not(Sum(obj1, obj2)), count
+    elif isinstance(element, wid.XorElement):
+        if all([i.line != None for i in element.inputs]):
+            n1 = element.inputs[0].line.node1.element
+            obj1, count = buildExpression(n1, count)
+            n2 = element.inputs[1].line.node1.element
+            obj2, count = buildExpression(n2, count)
+            return Product(Sum(obj1, obj2), Sum(Not(obj1), Not(obj2))), count
+    elif isinstance(element, wid.SwitchElement):
+        if element not in count: 
+            letter = chr(65+len(count))
+            count[element] = letter
+        else:
+            letter = count[element]
+        return Var(letter), count
+    
 
 pg.init()
 pg.font.init()
+
+sql.createDatabase('user_data')
 
 smallFont = pg.font.SysFont('Calibri', 16)
 medFont = pg.font.SysFont('Calibri', 24)
@@ -202,13 +552,14 @@ DIM = (1450, 725)
 testc = [(0.05+0.1*i, 0.05+0.1*i, 0.1*(i+1)) for i in range(10)]
 testc = [[round(k*255) for k in i] for i in testc]
 
+toRemove = []
+
 BORDERC = (199, 81, 70)#testc[3]
 BACKGROUNDC = testc[8]
 HIGHLIGHT1 = testc[6]
 HIGHLIGHT2 = testc[7]
 TEXTC = testc[2]
 
-print(BORDERC, BACKGROUNDC, HIGHLIGHT1, HIGHLIGHT2, TEXTC)
 display = pg.display.set_mode(DIM)
 clock = pg.time.Clock()
 
@@ -220,6 +571,8 @@ logicScreen = pgu.Screen(DIM)
 logicScreenSetup()
 tableScreen = pgu.Screen(DIM)
 tableScreenSetup()
+loginScreen = pgu.Screen(DIM)
+loginScreenSetup()
 logicHelpScreen = pgu.Screen(DIM)
 logicHelpScreenSetup()
 syntaxHelpScreen = pgu.Screen(DIM)
@@ -228,12 +581,14 @@ syntaxHelpScreenSetup()
 curScreen = mainScreen
 run = True
 while run:
-    # curScreen.fill(BACKGROUNDC)
+    curScreen.fill(BACKGROUNDC)
+    curScreen.redraw()
     for event in pg.event.get():
         if event.type == pg.QUIT:
             run = False
         curScreen.event_update(event)
     curScreen.update()
+
 
     clock.tick(1000)
     display.blit(curScreen, (0,0))

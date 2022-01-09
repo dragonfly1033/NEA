@@ -9,6 +9,9 @@ class BinaryTree:
     def find_and_replace(self, val, new):
         self.root.find_and_replace(val, new) 
 
+    def getRows(self):
+        pass
+
 class Node:
     def __init__(self, parent=None, val=None):
         self.parent = parent
@@ -60,3 +63,5 @@ class Node:
             return f'({left}{this}{right})'
         elif order == 'post':
             return f'({left},{right},{this})'
+
+
