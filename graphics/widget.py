@@ -307,6 +307,16 @@ class Cell:
                                 self.element = NandElement(self)
                             except OverflowError:
                                 self.element = None
+                        elif self.grid.selectedWidget == 'high':
+                            try:
+                                self.element = HighElement(self)
+                            except OverflowError:
+                                self.element = None
+                        elif self.grid.selectedWidget == 'low':
+                            try:
+                                self.element = LowElement(self)
+                            except OverflowError:
+                                self.element = None
         if self.element != None: self.element.update(event)          
 
     def show(self):
@@ -574,6 +584,30 @@ class BulbElement(Element):
         self.imageSurface.blit(l.label, l.label_rect)
         
 
+class HighElement(Element):
+    def __init__(self, cell):
+        super().__init__(cell, '1', 0, 1)
+        self.outputs[0].setV(1)
+        self.imageSurface.fill(self.cell.grid.onC)
+        l = pgu.Label(self, self.text, (0,0,self.imDim[0],self.imDim[1]), font, c, self.cell.grid.bg, align='centre', addSelf=False)
+        self.imageSurface.blit(l.label, l.label_rect)
+
+    def updateOutputs(self):
+        pass
+
+
+class LowElement(Element):
+    def __init__(self, cell):
+        super().__init__(cell, '0', 0, 1)
+        self.outputs[0].setV(0)
+        self.imageSurface.fill(self.cell.grid.lineC)
+        l = pgu.Label(self, self.text, (0,0,self.imDim[0],self.imDim[1]), font, c, self.cell.grid.bg, align='centre', addSelf=False)
+        self.imageSurface.blit(l.label, l.label_rect)
+
+    def updateOutputs(self):
+        pass
+
+
 pg.font.init()
 font = pg.font.SysFont('Calibri Bold', 64)
 smallFont = pg.font.SysFont('Calibri', 12)
@@ -599,5 +633,7 @@ HEIGHTS = {
     NorElement:2,
     SwitchElement:1,
     BulbElement:1,
-    XorElement:2
+    XorElement:2,
+    HighElement:1,
+    LowElement:1
 }

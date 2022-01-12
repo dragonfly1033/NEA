@@ -14,9 +14,9 @@ def createTable(db, name, cols, primaryKey):
         cur.execute(command)
         con.commit()
         con.close() 
-        print(command)
     except Exception as e:
-        print(e)
+        if debug:
+            print(e)
 
 def runCommand(db, comm):
     try:
@@ -24,11 +24,13 @@ def runCommand(db, comm):
         cur = con.cursor()
         command = comm
         cur.execute(command)
+        ret = cur.fetchall()
         con.commit()
         con.close() 
-        print(command)
+        return ret
     except Exception as e:
-        print(e)
+        if debug:
+            print(e)
 
 def insertUser(db, uname, passwd):
     try:
@@ -38,9 +40,9 @@ def insertUser(db, uname, passwd):
         cur.execute(command)
         con.commit()
         con.close() 
-        print(command)
     except Exception as e:
-        print(e) 
+        if debug:
+            print(e) 
 
 def insertExpression(db, uname, expr):
     try:
@@ -50,24 +52,29 @@ def insertExpression(db, uname, expr):
         cur.execute(command)
         con.commit()
         con.close() 
-        print(command)
     except Exception as e:
-        print(e)   
+        if debug:
+            print(e)   
 
 path = f'{Path().resolve()}\\accounts\\'
+debug = False
 
-# createTable('user_data', 
-#             'login', 
-#             [   'ID INTEGER PRIMARY KEY',
-#                 'uname TEXT NOT NULL',
-#                 'pass TEXT NOT NULL'
-#             ],
-#             None)
+try:
+    createDatabase('user_data')
+    createTable('user_data', 
+                'login', 
+                [   'ID INTEGER PRIMARY KEY',
+                    'uname TEXT NOT NULL',
+                    'pass TEXT NOT NULL'
+                ],
+                None)
 
-# createTable('user_data', 
-#             'expressions', 
-#             [   'ID INTEGER PRIMARY KEY',
-#                 'uname TEXT NOT NULL',
-#                 'expr TEXT NOT NULL'
-#             ],
-#             None)
+    createTable('user_data', 
+                'expressions', 
+                [   'ID INTEGER PRIMARY KEY',
+                    'uname TEXT NOT NULL',
+                    'expr TEXT NOT NULL'
+                ],
+                None)
+except:
+    pass

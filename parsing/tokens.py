@@ -9,14 +9,14 @@ class Expression:
 
     def __eq__(self, other):
         if isinstance(other, type(self)):
-            return self.terms == other.terms
+            return set(self.terms) == set(other.terms)
         return False
 
     def __hash__(self):
         if len(self.terms) > 1:
             return reduce(lambda i, j: hash(i) ^ hash(j), self.terms)
         else:
-            return hash(self.term)
+            return hash(self.terms[0])
 
     @property
     def rep(self):
@@ -253,7 +253,6 @@ class Expression:
                             diff = [i for i in pterms if i not in compareWith]
                             notmatch = [i for i in notPterms if i in compareWith]
                             notdiff = [i for i in notPterms if i not in compareWith]
-                            # print([i.rep for i in match], [i.rep for i in diff], [i.rep for i in pterms], [i.rep for i in compareWith], [i.rep for i in notPterms], [i.rep for i in notmatch], [i.rep for i in notdiff])
                             if match == compareWith:
                                 self.terms.remove(term)
                                 extra = [i for i in rest if i != every]
@@ -334,4 +333,4 @@ class Var(Expression):
 VAR0 = Var('0')
 VAR1 = Var('1')
 
-# print(getLatex(Expression(Sum(Var('A'), Var('B')))))
+

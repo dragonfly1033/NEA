@@ -85,14 +85,13 @@ class Input:
         self.borderWidth = borderWidth
         self.cursorPos = 0
         self.homeCursorPos = 0
-        self.endCursorPos = 0
+        self.endCursorPos = len(self.text)
         self.textR = self.font.render(self.text, False, self.colours[1])
         self.textOffset = 8
         self.charBuffer = 3
         self.zlayer = zlayer
         if isinstance(screen, (Screen, ScrollableSurface)):
             screen.addWidget(self)
-        self.show()
 
     def reset(self):
         self.text = ''
@@ -110,6 +109,8 @@ class Input:
         return self.getTextWidth() > self.rect[2] - (2*self.borderWidth) - self.textOffset
 
     def show(self):
+        c = self.fg if self.activated > 0 else [min(255,(i+75)) for i in self.fg]
+        self.textR = self.font.render(self.text[self.homeCursorPos:self.endCursorPos+1], True, c)
         if isinstance(self.display, ScrollableSurface):
             display = self.display.contentSurface
         else:
@@ -203,7 +204,6 @@ class Input:
                 if self.homeCursorPos > len(self.text): self.homeCursorPos = len(self.text) 
                 if self.endCursorPos > len(self.text): self.endCursorPos = len(self.text) 
 
-                self.textR = self.font.render(self.text[self.homeCursorPos:self.endCursorPos+1], True, self.fg)
                 # print(self.homeCursorPos, self.cursorPos, self.endCursorPos, len(self.text))
         return ret
 
@@ -535,8 +535,6 @@ class ScrollableSurface(pg.Surface):
         self.contentSurface.fill(self.bg)
 
     def removeAll(self):
-        for i in self.widgets:
-            self.display.widgets.remove(i)
         self.widgets.clear()
 
     def update(self, event):
@@ -652,14 +650,17 @@ class Screen(pg.Surface):
     def event_update(self, event):
         self.totalUpdates = []
         self.layeredUpdates = {}
-        for layer in reversed(self.embed):
+        embedKeys = reversed(list(self.embed))
+        widgetsKeys = reversed(list(self.widgets))
+
+        for layer in embedKeys:
             if layer not in self.layeredUpdates: self.layeredUpdates[layer] = []
             for embed in self.embed[layer]:
                 v = embed.update(event)
                 self.totalUpdates.append(v)
                 self.layeredUpdates[layer].append(v)
 
-        for layer in reversed(self.widgets):
+        for layer in widgetsKeys:
             if layer not in self.layeredUpdates: self.layeredUpdates[layer] = []
             for widget in self.widgets[layer]:
                 if isinstance(widget, (Input, Button, DraggablePoint, DraggableRect)):
