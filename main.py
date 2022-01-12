@@ -434,7 +434,7 @@ def exprToLogic(expr, errorLabel):
     # print(gates, links, depths, heights, switches)
     coords = getCoords(gates, links, depths, heights)
     # print(f'P={coords}\nH={[wid.HEIGHTS[i] for i in gates]}')
-    plotLogicFromExpr(gates, links, coords)
+    plotLogicFromExpr(gates, links, coords, switches)
 
 def exprToGates(expr, gates=[], links=[], switches=[], depth=0, depths=[], heights={}): 
     depth += 1
@@ -545,7 +545,7 @@ def getCoords(gates, links, depths, heights):
         coords.append((x, y))
     return coords
         
-def plotLogicFromExpr(gates, links, coords):
+def plotLogicFromExpr(gates, links, coords, switches):
     changeScreen('logic')
     gateElements = []
     for i in range(len(gates)):
@@ -553,7 +553,10 @@ def plotLogicFromExpr(gates, links, coords):
         gate = gates[i]
         cell = sandboxWindow.cells[y][x]
         try:
-            cell.element = gate(cell)
+            if gate == wid.SwitchElement:
+                cell.element = gate(cell, name=switches[i])
+            else:
+                cell.element = gate(cell)
         except OverflowError:
             cell.element = None
         gateElements.append(cell.element)

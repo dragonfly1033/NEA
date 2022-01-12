@@ -548,8 +548,8 @@ class NandElement(Element):
         super().__init__(cell, 'Nand', 2, 1)
         
 class SwitchElement(Element):
-    def __init__(self, cell):
-        super().__init__(cell, 'Switch', 0, 1)
+    def __init__(self, cell, name='Switch'):
+        super().__init__(cell, name, 0, 1)
 
     def isOver(self):
         x, y = pg.mouse.get_pos()
@@ -582,7 +582,6 @@ class BulbElement(Element):
         self.imageSurface.fill(c)
         l = pgu.Label(self, self.text, (0,0,self.imDim[0],self.imDim[1]), font, c, self.cell.grid.bg, align='centre', addSelf=False)
         self.imageSurface.blit(l.label, l.label_rect)
-        
 
 class HighElement(Element):
     def __init__(self, cell):
@@ -594,7 +593,6 @@ class HighElement(Element):
 
     def updateOutputs(self):
         pass
-
 
 class LowElement(Element):
     def __init__(self, cell):
