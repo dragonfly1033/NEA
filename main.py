@@ -239,18 +239,18 @@ def logicScreenSetup(*args):
     helpButton = pgu.Button(logicScreen, 'Help', (DIM[0]-15-125, 15, 125, 50), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeScreen('logicHelp'))
     widgetBox = pgu.ScrollableSurface(logicScreen, 0, 80, (250-3, DIM[1]-80), BACKGROUNDC, BORDERC, TEXTC, padding=8)
     sandboxWindow = wid.Grid(logicScreen, 250, 80, (DIM[0]-250, DIM[1]-80), BACKGROUNDC, TEXTC, TEXTC, HIGHLIGHT1, BORDERC)
-    switchButton = pgu.Button(widgetBox, 'Switch', (0, (120+10)*0, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'switch'))
-    bulbButton = pgu.Button(widgetBox, 'Bulb',     (0, (120+10)*1, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'bulb'))
-    andButton = pgu.Button(widgetBox, 'And',       (0, (120+10)*2, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'and'))
-    orButton = pgu.Button(widgetBox, 'Or',         (0, (120+10)*3, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'or'))
-    notButton = pgu.Button(widgetBox, 'Not',       (0, (120+10)*4, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'not'))
-    xorButton = pgu.Button(widgetBox, 'Xor',       (0, (120+10)*5, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'xor'))
-    norButton = pgu.Button(widgetBox, 'Nor',       (0, (120+10)*6, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'nor'))
-    nandButton = pgu.Button(widgetBox, 'Nand',     (0, (120+10)*7, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'nand'))
-    highButton = pgu.Button(widgetBox, '1',        (0, (120+10)*8, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'high'))
-    lowButton = pgu.Button(widgetBox, '0',         (0, (120+10)*9, 210, 120), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'low'))
+    switchButton = pgu.Button(widgetBox, 'Switch', (0, (80+10)*0, 210, 80), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'switch'))
+    bulbButton = pgu.Button(widgetBox, 'Bulb',     (0, (80+10)*1, 210, 80), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'bulb'))
+    andButton = pgu.Button(widgetBox, 'And',       (0, (80+10)*2, 210, 80), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'and'))
+    orButton = pgu.Button(widgetBox, 'Or',         (0, (80+10)*3, 210, 80), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'or'))
+    notButton = pgu.Button(widgetBox, 'Not',       (0, (80+10)*4, 210, 80), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'not'))
+    xorButton = pgu.Button(widgetBox, 'Xor',       (0, (80+10)*5, 210, 80), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'xor'))
+    norButton = pgu.Button(widgetBox, 'Nor',       (0, (80+10)*6, 210, 80), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'nor'))
+    nandButton = pgu.Button(widgetBox, 'Nand',     (0, (80+10)*7, 210, 80), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'nand'))
+    highButton = pgu.Button(widgetBox, '1',        (0, (80+10)*8, 210, 80), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'high'))
+    lowButton = pgu.Button(widgetBox, '0',         (0, (80+10)*9, 210, 80), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: changeSelectedWidget(sandboxWindow, 'low'))
     
-    errorLabel = pgu.Label(logicScreen, 'Multiple Circuits Detected', (435, 15, 205, 50), smallMedFont, HIGHLIGHT1, TEXTC, align='center')    
+    errorLabel = pgu.Label(logicScreen, '', (435, 15, 205, 50), smallMedFont, HIGHLIGHT1, TEXTC, align='center')    
     simplifyButton = pgu.Button(logicScreen, 'Simplify', (155, 15, 125, 50), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: exprToSimplifyWrapper(gatesToExpr(), errorLabel))
     tabulateButton = pgu.Button(logicScreen, 'Tabulate', (295, 15, 125, 50), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: exprToTable(gatesToExpr(), errorLabel))
 
@@ -430,7 +430,7 @@ def exprToLogic(expr, errorLabel):
         return
 
     gates, links, switches, depth, depths, heights = exprToGates(expr, [], [], [], 0, [] ,{})
-    gates, links, depths, heights = resolveDuplicates(gates, links, switches, depths, heights)
+    gates, links, depths, heights, switches = resolveDuplicates(gates, links, switches, depths, heights)
     # print(gates, links, depths, heights, switches)
     coords = getCoords(gates, links, depths, heights)
     # print(f'P={coords}\nH={[wid.HEIGHTS[i] for i in gates]}')
@@ -523,6 +523,7 @@ def resolveDuplicates(gates, links, switches, depths, heights):
                 ind = i-count
             heights[depths[ind]] -= wid.HEIGHTS[gates[ind]]
             gates = gates[:ind] + gates[ind+1:]
+            switches = switches[:ind] + switches[ind+1:]
             links = links[:ind] + links[ind+1:]
             depths = depths[:ind] + depths[ind+1:]
             count += 1
@@ -532,7 +533,7 @@ def resolveDuplicates(gates, links, switches, depths, heights):
                 val = gateIDs[links[i][j]]
                 if val != None:
                     links[i][j] = newSw.index(val)
-    return gates, links, depths, heights
+    return gates, links, depths, heights, switches
 
 def getCoords(gates, links, depths, heights):
     coords = []
