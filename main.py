@@ -1,5 +1,5 @@
 import pygame as pg
-import requests
+import urllib.request
 import hashlib
 from graphics import pygameutil as pgu
 from graphics import widget as wid
@@ -192,7 +192,6 @@ def logicScreenSetup(*args):
             toRemove.append(s)
         else:
             setExpr(expr[0].simplify()[-1][1].rep, errorLabel)
-            print('done')
 
     def saveExprWrapper(errorLabel):     
         expr = gatesToExpr()
@@ -260,19 +259,20 @@ def logicScreenSetup(*args):
         s = pgu.ScrollableSurface(d, 0, 0, (200, 240), BACKGROUNDC, BORDERC, HIGHLIGHT1, zlayer=3)
         exprs = getUserExprs()
         for i, v in enumerate(exprs):
-            b = pgu.Button(s, v, (0, i*55, 170, 50), smallFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda v=v: setExpr(v, errorLabel), zlayer=3)
+            b = pgu.Button(s, v, (0, i*55, 160, 50), smallFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda v=v: setExpr(v, errorLabel), zlayer=3)
         saveExprButton = pgu.Button(logicScreen, 'Save Expression', (DIM[0]-15-125-15-205-15-205, 15, 205, 50), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: saveExprWrapper(errorLabel))
 
 def simplifierScreenSetup(*args, steps=[]):
     global tableScreen
     simplifierScreen.clear()
     def buttonFunc(e):
-        val = validateExpression(e.text)
+        s = e.text.strip().replace(' ', '')
+        val = validateExpression(s)
         if not val:
             errorLabel.text = 'Error with input'
         else:
             errorLabel.text = ''
-            simplify(e.text)
+            simplify(s)
         e.reset()
     
     def tableConvert(expr, el):
@@ -372,17 +372,18 @@ def mainScreenSetup(*args):
         userLabel = pgu.Label(mainScreen, loggedInAs, (20, DIM[1]-buttonH*0.8-20, 200, buttonH*0.8), medFont, BACKGROUNDC, TEXTC, border=True, borderColour=BORDERC, align='center')
         logoutButton = pgu.Button(mainScreen, 'Log Out', (20, 20, 200, buttonH*0.8), medFont, BACKGROUNDC, HIGHLIGHT1, TEXTC, BORDERC, lambda: logout())
 
-
 def createPNG(step):
     global loading
     latex = step.getLatex()
     link = f'https://latex.codecogs.com/png.image?\\dpi{{300}}{latex}'
-    r = requests.get(link)
-    with open(f'tmpimages\\tmp.png', 'wb') as f:
-        f.write(r.content)
+    #r = requests.get(link)
+    #with open(f'tmpimages\\tmp.png', 'wb') as f:
+    #    f.write(r.content)
+    f = open('tmpimages\\tmp.png', 'wb')
+    f.write(urllib.request.urlopen(link).read())
+    f.close()
 
 def simplify(s):
-    s = s.strip().replace(' ','')
     if validateExpression(s):
         ss = parse.parse(s)
         steps = ss.simplify()
@@ -673,7 +674,6 @@ def register(uname, passwd, errorLabel):
     curNames = [i[0] for i in curNames]
     if uname.text in curNames:
         errorLabel.text = 'Username Taken'
-        print(curNames)
     else:
         errorLabel.text = ''
         sql.insertUser('user_data', uname.text, str(hashlib.sha256(passwd.text.encode('utf-8')).hexdigest()))
@@ -818,7 +818,6 @@ while run:
             display.blit(loadingOverlay, (0,0))
             loadingFrame += 1
         elif loadingFrame == 1:
-            print(loading)        
             loading[0](*loading[1], **loading[2])
             loading = None
             loadingFrame = 0
