@@ -1,5 +1,4 @@
 import pygame as pg
-from pygame import gfxdraw as ppg #after the tk vs ttk convention
 from operator import itemgetter
 from math import sin, pi, sqrt
 from collections import OrderedDict
@@ -385,7 +384,7 @@ class DraggableRect:
 
 
 class DropDown:
-    def __init__(self, screen, layer, rect, dropHeight, text, bg, fg, inactiveColour, activeColour, borderC, font, borderWidth=3, barWidth=5, padding=10, zlayer=0):
+    def __init__(self, screen, layer, rect, dropHeight, text, bg, fg, inactiveColour, activeColour, borderC, font, borderWidth=3, padding=10, zlayer=0):
         self.display = screen
         self.rect = rect
         self.dropHeight = dropHeight
@@ -397,7 +396,6 @@ class DropDown:
         self.borderC = borderC
         self.font = font
         self.borderWidth = borderWidth
-        self.barWidth = barWidth
         self.padding = padding
         self.zlayer = zlayer
         self.down = False
