@@ -187,6 +187,7 @@ class Input:
                     while self.isWider():
                         self.homeCursorPos += 1  
                     self.cursorPos += 1
+                elif event.key == pg.K_RETURN: pass
                 else:
                     if len(event.unicode) > 0:
                         self.text = self.text[:self.cursorPos] + event.unicode + self.text[self.cursorPos:]

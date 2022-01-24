@@ -271,19 +271,22 @@ class Expression:
     def distribute(self):
         for term in self.terms:
             if isinstance(term, Product):
-                if any(isinstance(i, Sum) for i in term.terms):
-                    lov = []
-                    for pterm in term.terms:
-                        if isinstance(pterm, Sum):
-                            lov.append(pterm.terms)
-                        else:
-                            lov.append([pterm])
+                lov = []
+                sums = 0
+                for pterm in term.terms:
+                    if isinstance(pterm, Sum):
+                        lov.append(pterm.terms)
+                        sums += 1
+                    else:
+                        lov.append([pterm])
+                if sums > 0:
                     prod = list(distributeList(*lov))
                     fin = Sum(*[Product(*i) for i in prod])
                     self.terms.remove(term)
                     self.terms.append(fin) 
             term.unitize()
             if not isinstance(term, Var): term.distribute()
+
 
 class Product(Expression):
     def __init__(self, *args):

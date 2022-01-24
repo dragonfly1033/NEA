@@ -144,7 +144,6 @@ def buildTree(s):
     return T
         
 def parse(s):
-
     areNotValid = [i not in validChars for i in s]
     if any(areNotValid):
         raise ValueError

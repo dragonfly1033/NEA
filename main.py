@@ -55,12 +55,13 @@ Click somewhere in the grid to place the widget
 To connect widgets click on outputs(right circles) and then separatley on inputs(left circles) no dragging is needed
 To delete a connection hover over the line and press backspace
 To delete a widget hover over it and press backspace
-To toggle a switch click on it'''
+To toggle a switch click on it
+Press escape to de-select a widget'''
     text = text.split('\n')
     h = 0
     for line in text:
         l = pgu.Label(logicHelpScreen, line, (106, 190+h, DIM[0]-212, 80), medFont, BACKGROUNDC, TEXTC, align='center')
-        h += 72
+        h += 61
 
 def syntaxHelpScreenSetup(*args):
     syntaxHelpScreen.clear()
