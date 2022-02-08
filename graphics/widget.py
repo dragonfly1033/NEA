@@ -515,7 +515,7 @@ class Node:
             pg.draw.circle(self.element.cell.grid.contentSurface, colour, self.center, self.r)
             # l = pgu.Label(self, f'{self.val}', (self.center[0]-self.r, self.center[1]-self.r, self.r*2, self.r*2), smallFont, colour, self.element.cell.grid.lineC, align='center', addSelf=False)
             # self.element.cell.grid.contentSurface.blit(l.label, l.label_rect)
-
+    
 
 class NotElement(Element):
     def __init__(self, cell):

@@ -25,7 +25,8 @@ class Expression:
     def getLatex(self):
         if isinstance(self, Product):
             terms = [i.getLatex() for i in self.terms]
-            return '%20\\cdot%20'.join(terms)
+            return ''.join(terms)
+            #return '%20\\cdot%20'.join(terms)
         elif isinstance(self, Sum):
             terms = [i.getLatex() for i in self.terms]
             return '\\left(' + '+'.join(terms) + '\\right)'

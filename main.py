@@ -778,6 +778,9 @@ setTheme(curTheme)
 display = pg.display.set_mode(DIM)
 clock = pg.time.Clock()
 
+pg.display.set_caption('bLogic')
+
+
 mainScreen = pgu.Screen(DIM)
 mainScreenSetup()
 simplifierScreen = pgu.Screen(DIM)
