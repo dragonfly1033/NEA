@@ -149,7 +149,8 @@ class Grid:
 
     def update(self, event):
         ret = False
-        updatedBefore = self.display.getScreen().totalUpdates.count(True) > self.display.getScreen().layeredUpdates[self.zlayer].count(True)
+        updatedBefore = (self.display.getScreen().totalUpdates.count(True) > 
+                            self.display.getScreen().layeredUpdates[self.zlayer].count(True))
         if self.isOver() and not updatedBefore:
             ret = True
             if event.type == pg.MOUSEBUTTONDOWN:
