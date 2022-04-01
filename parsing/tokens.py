@@ -50,15 +50,15 @@ class Expression:
 
     def __repr__(self):
         if isinstance(self, Sum):
-            return f'Sum({", ".join([term.repList() for term in self.terms])})'
+            return f'Sum({", ".join([repr(term) for term in self.terms])})'
         elif isinstance(self, Product):
-            return f'Product({", ".join([term.repList() for term in self.terms])})'
+            return f'Product({", ".join([repr(term) for term in self.terms])})'
         elif isinstance(self, Not):
-            return f'Not({", ".join([term.repList() for term in self.terms])})'
+            return f'Not({", ".join([repr(term) for term in self.terms])})'
         elif isinstance(self, Var):
             return f"Var({self.terms[0]})"
         else:
-            return f'Expression({", ".join([term.repList() for term in self.terms])})'
+            return f'Expression({", ".join([repr(term) for term in self.terms])})'
 
     def getNot(self, obj):
         t = Expression(Not(obj))
