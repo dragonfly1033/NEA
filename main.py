@@ -895,6 +895,7 @@ def simplifierScreenSetup(*args, steps=[]):
         barWidth=10,
     )
 
+    # in simpliferScreenSetup
     # display step as image in the stepsBox for every step
     h = 0
     for i, step in enumerate(steps[:-1]):
@@ -1254,13 +1255,15 @@ def createPNG(step):
     # fecth LaTeX image from API
     latex = step.getLatex()
     link = f"https://latex.codecogs.com/png.image?\\dpi{{300}}{latex}"
-    with open("tmpimages\\tmp.png", "wb") as f:
-        try:
-            bytess = urllib.request.urlopen(link).read()
-            f.write(bytess)
-        except urllib.error.URLError:
-            return False
-    return True
+    for i in range(3):
+        with open("tmpimages\\tmp.png", "wb") as f:
+            try:
+                bytess = urllib.request.urlopen(link).read()
+                f.write(bytess)
+                return True
+            except urllib.error.URLError as e:
+                pass
+    return False
 
 
 def simplify(s):
